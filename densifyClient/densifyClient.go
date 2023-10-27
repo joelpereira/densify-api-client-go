@@ -1,4 +1,4 @@
-package client
+package densifyClient
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"densify.com/api/models"
+	"github.com/joelpereira/densify-api-cient-go/models"
 )
 
 // type config struct {

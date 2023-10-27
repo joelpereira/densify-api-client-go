@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"densify.com/api/client"
+	densifyClient "github.com/joelpereira/densify-api-cient-go/densifyClient"
 )
 
 func main() {
@@ -12,7 +12,7 @@ func main() {
 	password := `password`
 
 	fmt.Printf("Logging in to: %s...\n", baseURL)
-	response, err := client.Authenticate(baseURL, username, password)
+	response, err := densifyClient.Authenticate(baseURL, username, password)
 	fmt.Printf("AUTHENTICATE: Response: %v, Error: '%v'\n\n", response, err)
 	if err != nil {
 		return
@@ -24,14 +24,14 @@ func main() {
 	tech := "aws"
 	analysisName := "analysis_name"
 
-	analysis, err := client.GetAnalysis(tech, analysisName)
+	analysis, err := densifyClient.GetAnalysis(tech, analysisName)
 	if err != nil {
 		fmt.Printf("GET ANALYSIS: ERROR: '%v'\n\n", err.Error())
 		return
 	}
 	fmt.Printf("GET ANALYSIS: Response: AnalysisId: %s, the rest: %v\n\n", analysis.AnalysisId, analysis)
 
-	recommendations, err := client.GetRecommendations(tech, analysis.AnalysisId)
+	recommendations, err := densifyClient.GetRecommendations(tech, analysis.AnalysisId)
 	if err != nil {
 		fmt.Printf("GET ANALYSIS: ERROR: '%v'\n\n", err.Error())
 		return
@@ -39,7 +39,7 @@ func main() {
 	// fmt.Println("Recommendations:::")
 	// fmt.Println(recommendations)
 
-	tf := client.ConvertRecommendationsToTF(recommendations)
+	tf := densifyClient.ConvertRecommendationsToTF(recommendations)
 	fmt.Println("TF format:::")
 	fmt.Println(tf)
 }
