@@ -36,6 +36,10 @@ type Client struct {
 	ApiPassword    string
 	ApiToken       string
 	ApiTokenExpiry int64
+
+	AnalysisTechnology string // aws, azure, gcp, k8s
+	AnalysisName       string // analysis name to look for
+	AnalysisId         string // analysis id to query for
 }
 
 type AuthResponse struct {
@@ -132,6 +136,14 @@ func (c *Client) GetNewToken() (*AuthResponse, error) {
 	return &authResponse, nil
 }
 
+func (c *Client) SetQuery(tech string, analysisName string) {
+	if c.AnalysisTechnology != tech || c.AnalysisName != analysisName {
+		c.AnalysisTechnology = tech
+		c.AnalysisName = analysisName
+		c.AnalysisId = ""
+	}
+}
+
 // func (c *Client) Authenticate(instanceURL string, username string, password string) (string, error) {
 // 	pre := ""
 // 	if !strings.HasPrefix(strings.ToLower(instanceURL), "http") {
@@ -147,9 +159,9 @@ func (c *Client) GetNewToken() (*AuthResponse, error) {
 // 	return c.getToken()
 // }
 
-func (c *Client) GetAnalysis(tech string, analysisName string) (*DensifyAnalysis, error) {
+func (c *Client) GetAnalysis() (*DensifyAnalysis, error) {
 	// retVal := models.ResponseAnalysis{}
-	urlAnalyses, err := c.validateTech(tech)
+	urlAnalyses, err := c.validateTech(c.AnalysisTechnology)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +208,7 @@ func (c *Client) GetAnalysis(tech string, analysisName string) (*DensifyAnalysis
 	}
 	var retAnalysis DensifyAnalysis
 	retErr := ""
-	analysisName = strings.ToLower(analysisName)
+	analysisName := strings.ToLower(c.AnalysisName)
 	analysisFound := false
 	for i := 0; i < len(analyses); i++ {
 		if strings.ToLower(analyses[i].AnalysisName) == analysisName {
@@ -213,12 +225,20 @@ func (c *Client) GetAnalysis(tech string, analysisName string) (*DensifyAnalysis
 		}
 		return nil, errors.New(retErr)
 	}
+	// set the analysis id as well
+	c.AnalysisId = retAnalysis.AnalysisId
 	return &retAnalysis, nil
 }
 
-func (c *Client) GetRecommendations(tech string, analysisId string) (*[]DensifyRecommendations, error) {
+// func (c *Client) GetRecommendations(tech string, analysisId string) (*[]DensifyRecommendations, error) {
+func (c *Client) GetRecommendations() (*[]DensifyRecommendations, error) {
+	// check if we have an AnalysisId
+	if c.AnalysisId == "" {
+		return nil, fmt.Errorf(`no AnalysisId found; make sure you call GetAnalysis() first`)
+	}
+
 	// check that output is either json/terraform
-	techUrl, err := c.validateTech(tech)
+	techUrl, err := c.validateTech(c.AnalysisTechnology)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +247,7 @@ func (c *Client) GetRecommendations(tech string, analysisId string) (*[]DensifyR
 	// 	return nil, err
 	// }
 
-	url := fmt.Sprintf("%s%s/%s/results", c.BaseURL, techUrl, analysisId)
+	url := fmt.Sprintf("%s%s/%s/results", c.BaseURL, techUrl, c.AnalysisId)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		// handle error
@@ -259,12 +279,12 @@ func (c *Client) GetRecommendations(tech string, analysisId string) (*[]DensifyR
 	// specify the type, cloud/container, within each obj/reco
 	count := len(recos)
 	for i := 0; i < count; i++ {
-		if tech == "k8s" || tech == "kubernetes" {
+		if c.AnalysisTechnology == "k8s" || c.AnalysisTechnology == "kubernetes" {
 			recos[i].AnalysisType = "containers"
 		} else {
 			recos[i].AnalysisType = "cloud"
 		}
-		recos[i].AnalysisTechnology = tech
+		recos[i].AnalysisTechnology = c.AnalysisTechnology
 	}
 	return &recos, nil
 }

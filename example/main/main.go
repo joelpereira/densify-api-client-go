@@ -28,14 +28,17 @@ func main() {
 	tech := "aws"
 	analysisName := "analysis_name"
 
-	analysis, err := client.GetAnalysis(tech, analysisName)
+	// set values
+	client.SetQuery(tech, analysisName)
+
+	analysis, err := client.GetAnalysis()
 	if err != nil {
 		fmt.Printf("GET ANALYSIS: ERROR: '%v'\n\n", err.Error())
 		return
 	}
 	fmt.Printf("GET ANALYSIS: Response: AnalysisId: %s, the rest: %v\n\n", analysis.AnalysisId, analysis)
 
-	recommendations, err := client.GetRecommendations(tech, analysis.AnalysisId)
+	recommendations, err := client.GetRecommendations()
 	if err != nil {
 		fmt.Printf("GET ANALYSIS: ERROR: '%v'\n\n", err.Error())
 		return
