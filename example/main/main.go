@@ -40,6 +40,7 @@ func main() {
 		fmt.Printf("GET ANALYSIS: ERROR: '%v'\n\n", err.Error())
 		return
 	}
+
 	// fmt.Println("Recommendations:::")
 	// fmt.Println(recommendations)
 
