@@ -1,4 +1,4 @@
-package densifyClient
+package Client
 
 import (
 	"bytes"

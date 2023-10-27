@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	densifyClient "github.com/joelpereira/densify-api-cient-go/densifyClient"
+	"github.com/joelpereira/densify-api-cient-go/Client"
 )
 
 func main() {
@@ -12,7 +12,7 @@ func main() {
 	password := `password`
 
 	fmt.Printf("Logging in to: %s...\n", baseURL)
-	response, err := densifyClient.Authenticate(baseURL, username, password)
+	response, err := Client.Authenticate(baseURL, username, password)
 	fmt.Printf("AUTHENTICATE: Response: %v, Error: '%v'\n\n", response, err)
 	if err != nil {
 		return
