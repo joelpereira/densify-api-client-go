@@ -137,7 +137,7 @@ func (c *Client) GetNewToken() (*AuthResponse, error) {
 	return &authResponse, nil
 }
 
-func (c *Client) SetQuery(tech string, analysisName string) {
+func (c *Client) Configure(tech string, analysisName string) {
 	if c.AnalysisTechnology != tech || c.AnalysisName != analysisName {
 		c.AnalysisTechnology = tech
 		c.AnalysisName = analysisName

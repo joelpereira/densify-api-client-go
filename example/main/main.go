@@ -33,7 +33,7 @@ func main() {
 	analysisName := "922390019409 (Mobile_Prod)"
 
 	// set values
-	client.SetQuery(tech, analysisName)
+	client.Configure(tech, analysisName)
 
 	analysis, err := client.GetAnalysis()
 	if err != nil {
