@@ -7,9 +7,12 @@ import (
 )
 
 func main() {
-	instanceURL := `https://instance.densify.com:443`
-	username := `email@org.com`
-	password := `password`
+	instanceURL := `https://partner1.densify.com:443`
+	username := `jpereira@densify.com`
+	password := `Jp3r31r@Jp3r31r@6`
+	// instanceURL := `https://instance.densify.com:443`
+	// username := `email@org.com`
+	// password := `password`
 
 	fmt.Printf("Logging in to: %s...\n", instanceURL)
 	client, err := densify.NewClient(&instanceURL, &username, &password)
@@ -26,7 +29,8 @@ func main() {
 	// fmt.Printf("REFRESH TOKEN: Response: %v, Error: '%v'\n\n", response, err)
 
 	tech := "aws"
-	analysisName := "analysis_name"
+	// analysisName := "analysis_name"
+	analysisName := "922390019409 (Mobile_Prod)"
 
 	// set values
 	client.SetQuery(tech, analysisName)
@@ -50,4 +54,7 @@ func main() {
 	tf := client.ConvertRecommendationsToTF(recommendations)
 	fmt.Println("TF format:::")
 	fmt.Println(tf)
+
+	// check if token is expired
+	fmt.Println(client.IsTokenExpired())
 }

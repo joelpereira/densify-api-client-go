@@ -40,6 +40,7 @@ type Client struct {
 	AnalysisTechnology string // aws, azure, gcp, k8s
 	AnalysisName       string // analysis name to look for
 	AnalysisId         string // analysis id to query for
+	AccountName        string // account name to store later
 }
 
 type AuthResponse struct {
@@ -285,6 +286,7 @@ func (c *Client) GetRecommendations() (*[]DensifyRecommendations, error) {
 			recos[i].AnalysisType = "cloud"
 		}
 		recos[i].AnalysisTechnology = c.AnalysisTechnology
+		recos[i].AccountName = c.AccountName
 	}
 	return &recos, nil
 }
@@ -322,6 +324,11 @@ func (c *Client) validateTech(tech string) (string, error) {
 // 	}
 // 	return resp, err
 // }
+
+func (c *Client) IsTokenExpired() bool {
+	now := time.Now().UnixNano() / int64(time.Millisecond)
+	return now >= c.ApiTokenExpiry
+}
 
 func (c *Client) ConvertRecommendationsToTF(recommendations *[]DensifyRecommendations) string {
 	return c.ConvertRecommendationsToTFWithVarName(recommendations, "densify_recommendations")
