@@ -19,7 +19,7 @@ type DensifyAnalysis struct {
 	AnalysisResults string `json:"analysisResults"`
 }
 
-type DensifyRecommendations struct {
+type DensifyRecommendation struct {
 	// Will be manually added from the analysis
 
 	AnalysisType       string // Values: cloud, containers

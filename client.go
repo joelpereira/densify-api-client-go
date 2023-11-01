@@ -37,10 +37,16 @@ type Client struct {
 	ApiToken       string
 	ApiTokenExpiry int64
 
+	// values required
+
 	AnalysisTechnology string // aws, azure, gcp, k8s
 	AnalysisName       string // analysis name to look for
-	AnalysisId         string // analysis id to query for
-	AccountName        string // account name to store later
+	EntityName         string // the entity name to pull recommendations for
+
+	// values to store in-between API calls
+
+	AnalysisId  string // analysis id to query for
+	AccountName string // account name to store later
 }
 
 type AuthResponse struct {
@@ -137,9 +143,9 @@ func (c *Client) GetNewToken() (*AuthResponse, error) {
 	return &authResponse, nil
 }
 
-func (c *Client) Configure(tech string, analysisName string) {
-	if c.AnalysisTechnology != tech || c.AnalysisName != analysisName {
-		c.AnalysisTechnology = tech
+func (c *Client) Configure(techPlatform string, analysisName string, entityName string) {
+	if c.AnalysisTechnology != techPlatform || c.AnalysisName != analysisName {
+		c.AnalysisTechnology = techPlatform
 		c.AnalysisName = analysisName
 		c.AnalysisId = ""
 	}
@@ -231,8 +237,25 @@ func (c *Client) GetAnalysis() (*DensifyAnalysis, error) {
 	return &retAnalysis, nil
 }
 
+// pull the recommendations and look for a specific entity in the list
+func (c *Client) GetRecommendation() (*DensifyRecommendation, error) {
+	recos, err := c.GetRecommendations()
+	if err != nil {
+		return nil, err
+	}
+	// go through the list of recommendations and look for the entity name provided
+	count := len(*recos)
+	for i := 0; i < count; i++ {
+		if (*recos)[i].Name == c.EntityName {
+			reco := (*recos)[i]
+			return &reco, nil
+		}
+	}
+	return nil, fmt.Errorf("could not find a recommendation named: %s", c.EntityName)
+}
+
 // func (c *Client) GetRecommendations(tech string, analysisId string) (*[]DensifyRecommendations, error) {
-func (c *Client) GetRecommendations() (*[]DensifyRecommendations, error) {
+func (c *Client) GetRecommendations() (*[]DensifyRecommendation, error) {
 	// check if we have an AnalysisId
 	if c.AnalysisId == "" {
 		return nil, fmt.Errorf(`no AnalysisId found; make sure you call GetAnalysis() first`)
@@ -271,7 +294,7 @@ func (c *Client) GetRecommendations() (*[]DensifyRecommendations, error) {
 		return nil, err
 	}
 
-	var recos []DensifyRecommendations
+	var recos []DensifyRecommendation
 	err = json.Unmarshal(body, &recos)
 	// Check for errors
 	if err != nil {
@@ -330,11 +353,11 @@ func (c *Client) IsTokenExpired() bool {
 	return now >= c.ApiTokenExpiry
 }
 
-func (c *Client) ConvertRecommendationsToTF(recommendations *[]DensifyRecommendations) string {
+func (c *Client) ConvertRecommendationsToTF(recommendations *[]DensifyRecommendation) string {
 	return c.ConvertRecommendationsToTFWithVarName(recommendations, "densify_recommendations")
 }
 
-func (c *Client) ConvertRecommendationsToTFWithVarName(recommendations *[]DensifyRecommendations, tfVarName string) string {
+func (c *Client) ConvertRecommendationsToTFWithVarName(recommendations *[]DensifyRecommendation, tfVarName string) string {
 	var sb strings.Builder
 	sb.WriteString(tfVarName + " = {")
 	count := len(*recommendations)
