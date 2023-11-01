@@ -144,10 +144,12 @@ func (c *Client) GetNewToken() (*AuthResponse, error) {
 }
 
 func (c *Client) Configure(techPlatform string, analysisName string, entityName string) {
-	if c.AnalysisTechnology != techPlatform || c.AnalysisName != analysisName {
+	if c.AnalysisTechnology != techPlatform || c.AnalysisName != analysisName || c.EntityName != entityName {
 		c.AnalysisTechnology = techPlatform
 		c.AnalysisName = analysisName
+		c.EntityName = entityName
 		c.AnalysisId = ""
+		c.AccountName = ""
 	}
 }
 
