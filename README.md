@@ -6,13 +6,30 @@ You can import the Densify Module using the following sample code below.
 ### Import
 ```go
 import (
-	"densify.com/api/client"
+	"github.com/joelpereira/densify-api-cient-go"
 )
 ```
 
 ### Authenticate
 ```go
-response, err := client.Authenticate(baseURL, username, password)
+client, err := client.NewClient(baseURL, username, password)
+if err != nil {
+    return
+}
+```
+
+### Configure Query
+```go
+densifyAPIQuery := densify.DensifyAPIQuery{
+    AnalysisTechnology:   "aws/azure/gcp/k8s",
+    AccountOrClusterName: "account-name",
+    EntityName:           "system-name",
+    // if it's a kubernetes resource:
+    K8sNamespace:         "namespace",
+    K8sPodName:           "podname",
+    K8sControllerType:    "deployment/daemonset/statefulset",
+}
+err = client.ConfigureQuery(&densifyAPIQuery)
 if err != nil {
     return
 }
@@ -20,15 +37,15 @@ if err != nil {
 
 ### Pull Analysis
 ```go
-analysis, err := client.GetAnalysis(tech, analysisName)
+analysis, err := client.GetAccountOrCluster()
 if err != nil {
     return
 }
 ```
 
-### Pull the Recommendations within the specified analysis
+### Pull the single Recommendation based on the query
 ```go
-recommendations, err := client.GetRecommendations(tech, analysis.AnalysisId)
+recommendations, err := client.GetDensifyRecommendation()
 if err != nil {
     return
 }

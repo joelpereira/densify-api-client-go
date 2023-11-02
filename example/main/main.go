@@ -7,12 +7,9 @@ import (
 )
 
 func main() {
-	instanceURL := `https://partner1.densify.com:443`
-	username := `jpereira@densify.com`
-	password := `Jp3r31r@Jp3r31r@6`
-	// instanceURL := `https://instance.densify.com:443`
-	// username := `email@org.com`
-	// password := `password`
+	instanceURL := `https://instance.densify.com:443`
+	username := `email@org.com`
+	password := `password`
 
 	fmt.Printf("Logging in to: %s...\n", instanceURL)
 	client, err := densify.NewClient(&instanceURL, &username, &password)
@@ -28,19 +25,20 @@ func main() {
 	// response, err = client.RefreshToken()
 	// fmt.Printf("REFRESH TOKEN: Response: %v, Error: '%v'\n\n", response, err)
 
-	// techPlatform := "aws"
-	// accountName := "922390019409 (Mobile_Prod)"
-	// entityName := "ec-pro-duct-1272"
 	// set values
 	densifyAPIQuery := densify.DensifyAPIQuery{
-		AnalysisTechnology:   "k8s",
-		AccountOrClusterName: "k8master",
-		EntityName:           "den-web",
-		K8sNamespace:         "qa-llc",
-		K8sPodName:           "webserver-deployment",
-		K8sControllerType:    "deployment",
+		AnalysisTechnology:   "aws/azure/gcp/k8s",
+		AccountOrClusterName: "account-name",
+		EntityName:           "system-name",
+		// if it's a kubernetes resource:
+		K8sNamespace:      "namespace",
+		K8sPodName:        "podname",
+		K8sControllerType: "deployment/daemonset/statefulset",
 	}
-	client.ConfigureQuery(&densifyAPIQuery)
+	err = client.ConfigureQuery(&densifyAPIQuery)
+	if err != nil {
+		return
+	}
 
 	analyses, err := client.GetAccountOrCluster()
 	if err != nil {
@@ -55,7 +53,6 @@ func main() {
 		return
 	}
 	fmt.Printf("GET RECOMMENDATION: '%v'\n\n", recommendation)
-	return
 
 	// recommendations, err := client.GetRecommendations()
 	// if err != nil {
