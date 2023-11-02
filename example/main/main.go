@@ -28,33 +28,48 @@ func main() {
 	// response, err = client.RefreshToken()
 	// fmt.Printf("REFRESH TOKEN: Response: %v, Error: '%v'\n\n", response, err)
 
-	tech := "aws"
-	// analysisName := "analysis_name"
-	analysisName := "922390019409 (Mobile_Prod)"
-
+	// techPlatform := "aws"
+	// accountName := "922390019409 (Mobile_Prod)"
+	// entityName := "ec-pro-duct-1272"
 	// set values
-	client.Configure(tech, analysisName, "")
+	densifyAPIQuery := densify.DensifyAPIQuery{
+		AnalysisTechnology:   "k8s",
+		AccountOrClusterName: "k8master",
+		EntityName:           "den-web",
+		K8sNamespace:         "qa-llc",
+		K8sPodName:           "webserver-deployment",
+		K8sControllerType:    "deployment",
+	}
+	client.ConfigureQuery(&densifyAPIQuery)
 
-	analysis, err := client.GetAnalysis()
+	analyses, err := client.GetAccountOrCluster()
 	if err != nil {
-		fmt.Printf("GET ANALYSIS: ERROR: '%v'\n\n", err.Error())
+		fmt.Printf("GET ACCOUNT(S): ERROR: '%v'\n\n", err.Error())
 		return
 	}
-	fmt.Printf("GET ANALYSIS: Response: AnalysisId: %s, the rest: %v\n\n", analysis.AnalysisId, analysis)
+	fmt.Printf("GET ACCOUNT(S): Response: Count: %d\nAccount(s): %v\n\n", len(*analyses), analyses)
 
-	recommendations, err := client.GetRecommendations()
+	recommendation, err := client.GetDensifyRecommendation()
 	if err != nil {
-		fmt.Printf("GET ANALYSIS: ERROR: '%v'\n\n", err.Error())
+		fmt.Printf("GET RECOMMENDATION: ERROR: '%v'\n\n", err.Error())
 		return
 	}
+	fmt.Printf("GET RECOMMENDATION: '%v'\n\n", recommendation)
+	return
+
+	// recommendations, err := client.GetRecommendations()
+	// if err != nil {
+	// 	fmt.Printf("GET ANALYSIS: ERROR: '%v'\n\n", err.Error())
+	// 	return
+	// }
 
 	// fmt.Println("Recommendations:::")
 	// fmt.Println(recommendations)
 
-	tf := client.ConvertRecommendationsToTF(recommendations)
-	fmt.Println("TF format:::")
-	fmt.Println(tf)
+	// tf := client.ConvertRecommendationsToTF(recommendations)
+	// fmt.Println("TF format:::")
+	// fmt.Println(tf)
 
 	// check if token is expired
-	fmt.Println(client.IsTokenExpired())
+	// fmt.Println(client.IsTokenExpired())
 }

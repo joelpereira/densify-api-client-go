@@ -10,13 +10,15 @@ func ConvertFloatToStr(value interface{}) string {
 }
 
 type DensifyAnalysis struct {
-	AccountId       string `json:"accountId"`
-	AccountName     string `json:"accountName"`
-	AnalysisId      string `json:"analysisId"`
-	AnalysisName    string `json:"analysisName"`
-	Href            string `json:"href"`
-	AnalysisStatus  string `json:"analysisStatus"`
-	AnalysisResults string `json:"analysisResults"`
+	AccountId        string `json:"accountId"`
+	AccountName      string `json:"accountName"`
+	AnalysisId       string `json:"analysisId"`
+	AnalysisName     string `json:"analysisName"`
+	Href             string `json:"href"`
+	AnalysisStatus   string `json:"analysisStatus"`
+	AnalysisResults  string `json:"analysisResults"`
+	PolicyName       string `json:"policyName"`
+	PolicyInstanceId string `json:"policyInstanceId"`
 }
 
 type DensifyRecommendation struct {
@@ -28,6 +30,7 @@ type DensifyRecommendation struct {
 	AnalysisId         string `json:"analysisId"`
 	AccountName        string `json:"accountName"`
 	// AnalysisName string `json:"analysisName"`
+	ApprovedType string `json:"approvedType"` // this checks if a change has been approved (by looking at the ApprovalType) and returns the RecommendedType, otherwise it will return the CurrentType.
 
 	// returned by Densify API
 	// Cloud
@@ -70,7 +73,7 @@ type DensifyRecommendation struct {
 	AvgInstanceCountRecommended FloatType `json:"avgInstanceCountRecommended"`
 	AvgInstanceCountCurrent     FloatType `json:"avgInstanceCountCurrent"`
 
-	// Containers
+	// Container values
 	Container             string    `json:"container"`
 	Cluster               string    `json:"cluster"`
 	HostName              string    `json:"hostName"`
