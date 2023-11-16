@@ -8,7 +8,7 @@ import (
 
 func main() {
 	instanceURL := `https://instance.densify.com:443`
-	username := `email@org.com`
+	username := `user@abc.com`
 	password := `password`
 
 	fmt.Printf("Logging in to: %s...\n", instanceURL)
@@ -27,16 +27,23 @@ func main() {
 
 	// set values
 	densifyAPIQuery := densify.DensifyAPIQuery{
-		AnalysisTechnology:   "aws/azure/gcp/k8s",
-		AccountOrClusterName: "account-name",
-		EntityName:           "system-name",
+		AnalysisTechnology: "aws/azure/gcp/kubernetes/k8s",
+		AccountNumber:      "account-num",
+		// or:
+		AccountName: "account-name",
+		SystemName:  "system-name",
+		// FallbackInstance: "m6i.large",
+
 		// if it's a kubernetes resource:
+		K8sCluster:        "cluster",
 		K8sNamespace:      "namespace",
 		K8sPodName:        "podname",
 		K8sControllerType: "deployment/daemonset/statefulset",
 	}
+
 	err = client.ConfigureQuery(&densifyAPIQuery)
 	if err != nil {
+		fmt.Printf("Configure Query: ERROR: '%v'\n\n", err.Error())
 		return
 	}
 

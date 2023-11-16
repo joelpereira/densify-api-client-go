@@ -21,7 +21,7 @@ if err != nil {
 ### Configure Query
 ```go
 densifyAPIQuery := densify.DensifyAPIQuery{
-    AnalysisTechnology:   "aws/azure/gcp/k8s",
+    AnalysisTechnology:   "aws/azure/gcp/kubernetes/k8s",
     AccountOrClusterName: "account-name",
     EntityName:           "system-name",
     // if it's a kubernetes resource:

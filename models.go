@@ -112,3 +112,26 @@ type AuditInfoWorkloadDataLast30 struct {
 	TotalDays int   `json:"totalDays"`
 	SeenDays  int   `json:"seenDays"`
 }
+
+// this checks if a change has been approved (by looking at the ApprovalType) and returns the RecommendedType, otherwise it will return the CurrentType.
+func (r *DensifyRecommendation) GetApprovedType() string {
+	// basic check(s) first
+	if r == nil {
+		return ""
+	}
+
+	switch r.ApprovalType {
+	case "na":
+		// not approved; use CurrentType
+		return r.CurrentType
+	case "all":
+		// all/any recommendation is approved
+		return r.RecommendedType
+	case "any":
+		// all/any recommendation is approved
+		return r.RecommendedType
+	default:
+		// specific recommendation is approved and specified in ApprovalType
+		return r.ApprovalType
+	}
+}

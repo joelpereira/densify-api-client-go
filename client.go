@@ -46,18 +46,28 @@ type Client struct {
 }
 
 type DensifyAPIQuery struct {
-	AnalysisTechnology   string // aws, azure, gcp, k8s
-	AccountOrClusterName string // account or k8s cluster name to look for
-	EntityName           string // the entity name to pull recommendations for
-	K8sNamespace         string // the k8s namespace to look for
-	K8sPodName           string // the k8s pod name to look for
-	K8sControllerType    string // the controller type used; ex. Deployment
+	AnalysisTechnology string // aws, azure, gcp, k8s
+	AccountName        string // account name to look for
+	AccountNumber      string // account number to look for
+	SystemName         string // the entity name to pull recommendations for
+
+	K8sCluster        string // the k8s cluster to look for
+	K8sNamespace      string // the k8s namespace to look for
+	K8sPodName        string // the k8s pod name to look for
+	K8sContainerName  string // the k8s container name to look for
+	K8sControllerType string // the controller type used; ex. Deployment
+
+	FallbackInstance   string
+	FallbackCPURequest string
+	FallbackMemRequest string
 }
 
 func (q *DensifyAPIQuery) setValuesToLowercase() {
 	q.AnalysisTechnology = strings.ToLower(q.AnalysisTechnology)
-	q.AccountOrClusterName = strings.ToLower(q.AccountOrClusterName)
-	q.EntityName = strings.ToLower(q.EntityName)
+	q.AccountName = strings.ToLower(q.AccountName)
+	q.AccountNumber = strings.ToLower(q.AccountNumber)
+	q.SystemName = strings.ToLower(q.SystemName)
+	q.K8sCluster = strings.ToLower(q.K8sCluster)
 	q.K8sNamespace = strings.ToLower(q.K8sNamespace)
 	q.K8sPodName = strings.ToLower(q.K8sPodName)
 	q.K8sControllerType = strings.ToLower(q.K8sControllerType)
@@ -105,8 +115,10 @@ func (c *Client) ConfigureQuery(query *DensifyAPIQuery) error {
 	if query == nil {
 		return fmt.Errorf("query cannot be empty/nil")
 	}
-	if query.AnalysisTechnology == "" || query.AccountOrClusterName == "" || query.EntityName == "" {
-		return fmt.Errorf("query must have technologyPlatform, accountName, entityName")
+	// validate the technology is valid
+	err := query.validate()
+	if err != nil {
+		return err
 	}
 
 	// query looks valid; let's lowercase all the values first
@@ -176,7 +188,7 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 		return nil, fmt.Errorf("you must specify a query first")
 	}
 
-	urlAnalyses, err := c.validateTech(c.Query.AnalysisTechnology)
+	urlAnalyses, err := c.Query.getURIPath()
 	if err != nil {
 		return nil, err
 	}
@@ -211,18 +223,21 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 	}
 	retAnalyses := []DensifyAnalysis{}
 	retErr := ""
-	accountOrClusterName := strings.ToLower(c.Query.AccountOrClusterName)
+	accountName := strings.ToLower(c.Query.AccountName)
+	accountNumber := strings.ToLower(c.Query.AccountNumber)
+	clusterName := strings.ToLower(c.Query.K8sCluster)
 	found := false
-	isKubernetesRequest := c.isKubernetesRequest(c.Query.AnalysisTechnology)
+	isKubernetesRequest := c.Query.isKubernetesRequest()
 	for i := 0; i < len(analyses); i++ {
 		// if it's a kubernetes/container request, look at analysis name, and check if it contains the cluster string instead
 		if isKubernetesRequest {
-			if strings.Contains(strings.ToLower(analyses[i].AnalysisName), accountOrClusterName) {
+			if strings.Contains(strings.ToLower(analyses[i].AnalysisName), clusterName) {
 				retAnalyses = append(retAnalyses, analyses[i])
 				found = true
 			}
-		} else { // else, look at cloud account name
-			if strings.ToLower(analyses[i].AccountName) == accountOrClusterName {
+		} else { // else, look at cloud account
+			// search by account number
+			if strings.Contains(strings.ToLower(analyses[i].AccountId), accountNumber) || strings.Contains(strings.ToLower(analyses[i].AccountName), accountName) {
 				retAnalyses = append(retAnalyses, analyses[i])
 				found = true
 			}
@@ -230,12 +245,17 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 	}
 	// if nothing was found, throw an error message with the list of analyses names
 	if !found {
-		retErr = fmt.Sprintf(`no account or cluster found with the name '%s'. Existing names are:\n`, c.Query.AccountOrClusterName)
+		qn := c.Query.AccountNumber
+		if isKubernetesRequest {
+			qn = c.Query.K8sCluster
+		}
+
+		retErr = fmt.Sprintf(`no account or cluster found with the name '%s'. Existing names are:\n`, qn)
 		for i := 0; i < len(analyses); i++ {
 			if isKubernetesRequest {
-				retErr = fmt.Sprintf("%s\"%s\"\n", retErr, analyses[i].AnalysisName)
+				retErr = fmt.Sprintf("%s\"%s\"\n", retErr, analyses[i].AnalysisId)
 			} else {
-				retErr = fmt.Sprintf("%s\"%s\"\n", retErr, analyses[i].AccountName)
+				retErr = fmt.Sprintf("%s\"%s\"\n", retErr, analyses[i].AccountId)
 			}
 		}
 		return nil, errors.New(retErr)
@@ -254,15 +274,12 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 	if c.Query == nil {
 		return nil, fmt.Errorf("you must specify a query first")
 	}
-
-	isKubernetesRequest := c.isKubernetesRequest(c.Query.AnalysisTechnology)
-	if isKubernetesRequest {
-		// then we also need namespace, podname
-		if c.Query.K8sNamespace == "" || c.Query.K8sPodName == "" || c.Query.K8sControllerType == "" {
-			return nil, fmt.Errorf("missing kubernetes namespace, controller type or pod name in query")
-		}
+	err := c.Query.validate()
+	if err != nil {
+		return nil, err
 	}
 
+	isKubernetesRequest := c.Query.isKubernetesRequest()
 	recos, err := c.GetDensifyRecommendations()
 	if err != nil {
 		return nil, err
@@ -276,14 +293,18 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 			recoNamespace := strings.ToLower((*recos)[i].Namespace)
 			recoPodName := strings.ToLower((*recos)[i].PodService)
 			recoControllerType := strings.ToLower((*recos)[i].ControllerType)
-			if recoNamespace == c.Query.K8sNamespace && recoControllerType == c.Query.K8sControllerType && recoPodName == c.Query.K8sPodName && recoName == c.Query.EntityName {
+			if recoNamespace == c.Query.K8sNamespace && recoControllerType == c.Query.K8sControllerType && recoPodName == c.Query.K8sPodName && recoName == c.Query.K8sContainerName {
 				reco := (*recos)[i]
 				return &reco, nil
 			}
 		} else {
 			recoName := strings.ToLower((*recos)[i].Name)
-			if recoName == c.Query.EntityName {
+			if recoName == c.Query.SystemName {
 				reco := (*recos)[i]
+				// check if the ApprovedType needs a fallback
+				if reco.ApprovedType == "" {
+					reco.ApprovedType = c.Query.FallbackInstance
+				}
 				return &reco, nil
 			}
 		}
@@ -291,9 +312,9 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 
 	// return a different error msg if it's a cloud vs k8s query
 	if isKubernetesRequest {
-		return nil, fmt.Errorf(`could not find a Densify recommendation for container (%s) in namespace (%s), controller (%s), pod name (%s)`, c.Query.EntityName, c.Query.K8sNamespace, c.Query.K8sControllerType, c.Query.K8sPodName)
+		return nil, fmt.Errorf(`could not find a Densify recommendation for container (%s) in namespace (%s), controller (%s), pod name (%s)`, c.Query.K8sContainerName, c.Query.K8sNamespace, c.Query.K8sControllerType, c.Query.K8sPodName)
 	} else {
-		return nil, fmt.Errorf("could not find a Densify recommendation named: %s", c.Query.EntityName)
+		return nil, fmt.Errorf("could not find a Densify recommendation named: %s", c.Query.SystemName)
 	}
 }
 
@@ -309,7 +330,7 @@ func (c *Client) GetDensifyRecommendations() (*[]DensifyRecommendation, error) {
 	}
 
 	// check that output is either json/terraform
-	techUrl, err := c.validateTech(c.Query.AnalysisTechnology)
+	techUrl, err := c.Query.getURIPath()
 	if err != nil {
 		return nil, err
 	}
@@ -349,14 +370,15 @@ func (c *Client) GetDensifyRecommendations() (*[]DensifyRecommendation, error) {
 		// add some additional parameters that are not returned in the API call
 		count := len(recos)
 		for i := 0; i < count; i++ {
-			if c.Query.AnalysisTechnology == "k8s" || c.Query.AnalysisTechnology == "kubernetes" {
+			if c.Query.isKubernetesRequest() {
 				recos[i].AnalysisType = "containers"
 			} else {
 				recos[i].AnalysisType = "cloud"
 			}
 			recos[i].AnalysisTechnology = c.Query.AnalysisTechnology
-			recos[i].AccountName = c.Query.AccountOrClusterName
-			recos[i].ApprovedType = c.getApprovedType(&recos[i])
+			recos[i].AccountId = c.Query.AccountNumber
+			recos[i].AccountName = c.Query.AccountName
+			recos[i].ApprovedType = recos[i].RecommendedType
 		}
 		// now we copy the recommendations into the retRecos slice
 		retRecos = append(retRecos, recos...)
@@ -364,30 +386,9 @@ func (c *Client) GetDensifyRecommendations() (*[]DensifyRecommendation, error) {
 	return &retRecos, nil
 }
 
-// this checks if a change has been approved (by looking at the ApprovalType) and returns the RecommendedType, otherwise it will return the CurrentType.
-func (c *Client) getApprovedType(r *DensifyRecommendation) string {
-	// basic check(s) first
-	if r == nil {
-		return ""
-	}
-
-	switch r.ApprovalType {
-	case "na":
-		// not approved; use CurrentType
-		return r.CurrentType
-	case "all":
-		// all/any recommendation is approved
-		return r.RecommendedType
-	case "any":
-		// all/any recommendation is approved
-		return r.RecommendedType
-	default:
-		// specific recommendation is approved and specified in ApprovalType
-		return r.ApprovalType
-	}
-}
-func (c *Client) isKubernetesRequest(techPlatform string) bool {
-	switch techPlatform {
+// check if the query is for Kubernetes/containers
+func (q *DensifyAPIQuery) isKubernetesRequest() bool {
+	switch q.AnalysisTechnology {
 	case "k8s":
 		return true
 	case "kubernetes":
@@ -397,10 +398,34 @@ func (c *Client) isKubernetesRequest(techPlatform string) bool {
 	}
 }
 
+func (q *DensifyAPIQuery) validate() error {
+	_, err := q.getURIPath()
+	if err != nil {
+		return err
+	}
+	// validate the query parameters passed are sufficient
+	if q.isKubernetesRequest() {
+		// k8s validation
+		if q.K8sCluster == "" || q.K8sNamespace == "" || q.K8sControllerType == "" || q.K8sPodName == "" || q.K8sContainerName == "" {
+			return fmt.Errorf("query must have required k8s fields: cluster, namespace, controllerType, podName, containerName")
+		}
+	} else {
+		// cloud validation
+		if q.SystemName == "" {
+			return fmt.Errorf("query must have System Name")
+		}
+		if q.AccountNumber == "" && q.AccountName == "" {
+			return fmt.Errorf("query must have Account Name or Account Number")
+		}
+	}
+	// no errors means it's a valid looking query
+	return nil
+}
+
 // returns the Densify API analysis path based on the technology platform used, ex. aws, azure, gcp, kubernetes
-func (c *Client) validateTech(tech string) (string, error) {
+func (q *DensifyAPIQuery) getURIPath() (string, error) {
 	resp := ""
-	switch tech {
+	switch q.AnalysisTechnology {
 	case "aws":
 		resp = "/analysis/cloud/aws"
 	case "azure":
@@ -412,7 +437,7 @@ func (c *Client) validateTech(tech string) (string, error) {
 	case "kubernetes":
 		resp = "/analysis/containers/kubernetes"
 	default:
-		return "", errors.New("invalid tech value provided; must be one of the following: aws, azure, gcp, k8s")
+		return "", errors.New("invalid tech value provided; must be one of the following: aws, azure, gcp, kubernetes, k8s")
 	}
 	return resp, nil
 }
