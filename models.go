@@ -44,8 +44,8 @@ type DensifyRecommendation struct {
 	RecommendedType         string    `json:"recommendedType"`
 	ImplementationMethod    string    `json:"implementationMethod"`
 	PredictedUptime         FloatType `json:"predictedUptime"`
-	TotalHoursRunning       int       `json:"totalHoursRunning"`
-	TotalHours              int       `json:"totalHours"`
+	TotalHoursRunning       int64     `json:"totalHoursRunning"`
+	TotalHours              int64     `json:"totalHours"`
 	Name                    string    `json:"name"`
 	RptHref                 string    `json:"rptHref"`
 	ApprovalType            string    `json:"approvalType"`
@@ -61,7 +61,7 @@ type DensifyRecommendation struct {
 	RecommendedHourlyRate   FloatType `json:"recommendedHourlyRate"`
 	RecommFirstSeen         int64     `json:"recommFirstSeen"`
 	RecommLastSeen          int64     `json:"recommLastSeen"`
-	RecommSeenCount         int       `json:"recommSeenCount"`
+	RecommSeenCount         int64     `json:"recommSeenCount"`
 	AuditInfo               AuditInfo `json:"auditInfo"`
 
 	// ASG specific values
@@ -81,16 +81,16 @@ type DensifyRecommendation struct {
 	TotalNetSavings       FloatType `json:"totalNetSavings"`
 	DisplayName           string    `json:"displayName"`
 	PodService            string    `json:"podService"`
-	CurrentCount          int       `json:"currentCount"`
-	CurrentCpuRequest     int       `json:"currentCpuRequest"`
-	CurrentCpuLimit       int       `json:"currentCpuLimit"`
-	CurrentMemRequest     int       `json:"currentMemRequest"`
-	CurrentMemLimit       int       `json:"currentMemLimit"`
-	RecommendedCpuRequest int       `json:"recommendedCpuRequest"`
-	RecommendedCpuLimit   int       `json:"recommendedCpuLimit"`
-	RecommendedMemRequest int       `json:"recommendedMemRequest"`
-	RecommendedMemLimit   int       `json:"recommendedMemLimit"`
-	RunningHours          int       `json:"runningHours"`
+	CurrentCount          int64     `json:"currentCount"`
+	CurrentCpuRequest     int64     `json:"currentCpuRequest"`
+	CurrentCpuLimit       int64     `json:"currentCpuLimit"`
+	CurrentMemRequest     int64     `json:"currentMemRequest"`
+	CurrentMemLimit       int64     `json:"currentMemLimit"`
+	RecommendedCpuRequest int64     `json:"recommendedCpuRequest"`
+	RecommendedCpuLimit   int64     `json:"recommendedCpuLimit"`
+	RecommendedMemRequest int64     `json:"recommendedMemRequest"`
+	RecommendedMemLimit   int64     `json:"recommendedMemLimit"`
+	RunningHours          int64     `json:"runningHours"`
 	ControllerType        string    `json:"controllerType"`
 	Namespace             string    `json:"namespace"`
 }
@@ -103,14 +103,14 @@ type AuditInfo struct {
 type AuditInfoDataCollection struct {
 	DateFirstAudited int64 `json:"dateFirstAudited"`
 	DateLastAudited  int64 `json:"dateLastAudited"`
-	AuditCount       int   `json:"auditCount"`
+	AuditCount       int64 `json:"auditCount"`
 }
 
 type AuditInfoWorkloadDataLast30 struct {
 	FirstDate int64 `json:"firstDate"`
 	LastDate  int64 `json:"lastDate"`
-	TotalDays int   `json:"totalDays"`
-	SeenDays  int   `json:"seenDays"`
+	TotalDays int64 `json:"totalDays"`
+	SeenDays  int64 `json:"seenDays"`
 }
 
 // this checks if a change has been approved (by looking at the ApprovalType) and returns the RecommendedType, otherwise it will return the CurrentType.

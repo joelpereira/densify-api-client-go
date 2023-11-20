@@ -115,14 +115,14 @@ func (c *Client) ConfigureQuery(query *DensifyAPIQuery) error {
 	if query == nil {
 		return fmt.Errorf("query cannot be empty/nil")
 	}
-	// validate the technology is valid
+	// let's lowercase all the values first
+	query.setValuesToLowercase()
+
+	// validate the query is valid
 	err := query.validate()
 	if err != nil {
 		return err
 	}
-
-	// query looks valid; let's lowercase all the values first
-	query.setValuesToLowercase()
 
 	c.Query = query
 	// reset other fields
@@ -409,6 +409,9 @@ func (q *DensifyAPIQuery) validate() error {
 		if q.K8sCluster == "" || q.K8sNamespace == "" || q.K8sControllerType == "" || q.K8sPodName == "" || q.K8sContainerName == "" {
 			return fmt.Errorf("query must have required k8s fields: cluster, namespace, controllerType, podName, containerName")
 		}
+		if !q.isValidControllerType() {
+			return fmt.Errorf("query controller type must be valid: pod, deployment, replicaset, daemonset, statefulset, cronjob, job")
+		}
 	} else {
 		// cloud validation
 		if q.SystemName == "" {
@@ -420,6 +423,30 @@ func (q *DensifyAPIQuery) validate() error {
 	}
 	// no errors means it's a valid looking query
 	return nil
+}
+
+func (q *DensifyAPIQuery) isValidControllerType() bool {
+	// check the controller types
+	switch strings.ToLower(q.K8sControllerType) {
+	case "deployment":
+		return true
+	case "":
+		return true
+	case "daemonset":
+		return true
+	case "replicaset":
+		return true
+	case "statefulset":
+		return true
+	case "pod":
+		return true
+	case "cronjob":
+		return true
+	case "job":
+		return true
+	default:
+		return false
+	}
 }
 
 // returns the Densify API analysis path based on the technology platform used, ex. aws, azure, gcp, kubernetes

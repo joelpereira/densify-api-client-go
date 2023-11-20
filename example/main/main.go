@@ -38,7 +38,7 @@ func main() {
 		K8sCluster:        "cluster",
 		K8sNamespace:      "namespace",
 		K8sPodName:        "podname",
-		K8sControllerType: "deployment/daemonset/statefulset",
+		K8sControllerType: "deployment/daemonset/statefulset/cronjob",
 	}
 
 	err = client.ConfigureQuery(&densifyAPIQuery)
