@@ -253,7 +253,7 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 		retErr = fmt.Sprintf(`no account or cluster found with the name '%s'. Existing names are:\n`, qn)
 		for i := 0; i < len(analyses); i++ {
 			if isKubernetesRequest {
-				retErr = fmt.Sprintf("%s\"%s\"\n", retErr, analyses[i].AnalysisId)
+				retErr = fmt.Sprintf("%s\"%s\"\n", retErr, analyses[i].AnalysisName)
 			} else {
 				retErr = fmt.Sprintf("%s\"%s\"\n", retErr, analyses[i].AccountId)
 			}
