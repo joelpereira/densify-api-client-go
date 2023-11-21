@@ -50,7 +50,7 @@ type DensifyAPIQuery struct {
 	AccountName        string // account name to look for
 	AccountNumber      string // account number to look for
 	SystemName         string // the entity name to pull recommendations for
-	SkipErrors         bool
+	SkipErrors         bool   // skip/ignore errors
 
 	K8sCluster        string // the k8s cluster to look for
 	K8sNamespace      string // the k8s namespace to look for
@@ -191,18 +191,12 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 
 	urlAnalyses, err := c.Query.getURIPath()
 	if err != nil {
-		if c.Query.SkipErrors {
-			return nil, nil
-		}
 		return nil, err
 	}
 
 	url := fmt.Sprintf("%s%s", c.BaseURL, urlAnalyses)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		if c.Query.SkipErrors {
-			return nil, nil
-		}
 		// handle error
 		return nil, err
 	}
@@ -212,9 +206,6 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 	// resp, err := http.DefaultClient.Do(req)
 	response, err := c.HTTPClient.Do(req)
 	if err != nil {
-		if c.Query.SkipErrors {
-			return nil, nil
-		}
 		return nil, err
 	}
 	defer response.Body.Close()
@@ -222,9 +213,6 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 	//Read the response body
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		if c.Query.SkipErrors {
-			return nil, nil
-		}
 		return nil, err
 	}
 
@@ -232,9 +220,6 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 	err = json.Unmarshal(body, &analyses)
 	// Check for errors
 	if err != nil {
-		if c.Query.SkipErrors {
-			return nil, nil
-		}
 		return nil, errors.New("JSON decode error: " + err.Error())
 	}
 	retAnalyses := []DensifyAnalysis{}
@@ -261,9 +246,6 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 	}
 	// if nothing was found, throw an error message with the list of analyses names
 	if !found {
-		if c.Query.SkipErrors {
-			return nil, nil
-		}
 		qn := c.Query.AccountNumber
 		if isKubernetesRequest {
 			qn = c.Query.K8sCluster
