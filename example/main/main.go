@@ -2,14 +2,36 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/joelpereira/densify-api-cient-go"
 )
 
 func main() {
 	instanceURL := `https://instance.densify.com:443`
-	username := `user@abc.com`
+	username := `user@xyz.com`
 	password := `password`
+
+	// query
+	densifyAPIQuery := densify.DensifyAPIQuery{
+		AnalysisTechnology: "aws/azure/gcp/kubernetes/k8s",
+		AccountNumber:      "account-num",
+		// or:
+		AccountName: "account-name",
+		SystemName:  "system-name",
+		// FallbackInstance: "m6i.large",
+
+		// if it's a kubernetes resource:
+		// K8sCluster:        "cluster",
+		// K8sNamespace:      "namespace",
+		// K8sPodName:        "podname",
+		// K8sControllerType: "deployment/daemonset/statefulset/cronjob",
+	}
+
+	fmt.Println("len", len(os.Args))
+	instanceURL = os.Args[1]
+	username = os.Args[2]
+	password = os.Args[3]
 
 	fmt.Printf("Logging in to: %s...\n", instanceURL)
 	client, err := densify.NewClient(&instanceURL, &username, &password)
@@ -25,20 +47,18 @@ func main() {
 	// response, err = client.RefreshToken()
 	// fmt.Printf("REFRESH TOKEN: Response: %v, Error: '%v'\n\n", response, err)
 
-	// set values
-	densifyAPIQuery := densify.DensifyAPIQuery{
-		AnalysisTechnology: "aws/azure/gcp/kubernetes/k8s",
-		AccountNumber:      "account-num",
-		// or:
-		AccountName: "account-name",
-		SystemName:  "system-name",
-		// FallbackInstance: "m6i.large",
-
-		// if it's a kubernetes resource:
-		K8sCluster:        "cluster",
-		K8sNamespace:      "namespace",
-		K8sPodName:        "podname",
-		K8sControllerType: "deployment/daemonset/statefulset/cronjob",
+	// governance
+	densifyAPIQuery = densify.DensifyAPIQuery{
+		AnalysisTechnology: "azure",
+		// AccountName:        "Mobile Services (Pay-Go)",
+		AccountNumber: "bc009556-bc00-4d00-00bc-bc03322990d3",
+		SystemName:    "st01-pro-rais-266",
+	}
+	densifyAPIQuery = densify.DensifyAPIQuery{
+		AnalysisTechnology: "aws",
+		AccountName:        "general services",
+		// AccountNumber: "bc009556-bc00-4d00-00bc-bc03322990d3",
+		SystemName: "asop-dev-io-244",
 	}
 
 	err = client.ConfigureQuery(&densifyAPIQuery)
@@ -60,6 +80,13 @@ func main() {
 		return
 	}
 	fmt.Printf("GET RECOMMENDATION: '%v'\n\n", recommendation)
+
+	err = client.LoadDensifyInstanceGovernance(recommendation)
+	if err != nil {
+		fmt.Printf("GET INSTANCE GOVERNANCE: ERROR: '%v'\n\n", err.Error())
+		return
+	}
+	fmt.Printf("GET INSTANCE GOVERNANCE: '%v'\n\n", recommendation.InstanceGovernance)
 
 	// recommendations, err := client.GetRecommendations()
 	// if err != nil {

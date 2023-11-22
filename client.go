@@ -229,36 +229,48 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 	clusterName := strings.ToLower(c.Query.K8sCluster)
 	found := false
 	isKubernetesRequest := c.Query.isKubernetesRequest()
+	var uniqueStrings UniqueList
+	uniqueStrings.Init()
+	errMsgParameter := ""
 	for i := 0; i < len(analyses); i++ {
 		// if it's a kubernetes/container request, look at analysis name, and check if it contains the cluster string instead
 		if isKubernetesRequest {
+			uniqueStrings.Add(analyses[i].AnalysisName)
+			errMsgParameter = "cluster"
 			if strings.Contains(strings.ToLower(analyses[i].AnalysisName), clusterName) {
 				retAnalyses = append(retAnalyses, analyses[i])
 				found = true
 			}
 		} else { // else, look at cloud account
 			// search by account number
-			if strings.Contains(strings.ToLower(analyses[i].AccountId), accountNumber) || strings.Contains(strings.ToLower(analyses[i].AccountName), accountName) {
-				retAnalyses = append(retAnalyses, analyses[i])
-				found = true
+			if accountNumber != "" {
+				uniqueStrings.Add(analyses[i].AccountId)
+				errMsgParameter = "account number"
+				if strings.Contains(strings.ToLower(analyses[i].AccountId), accountNumber) {
+					retAnalyses = append(retAnalyses, analyses[i])
+					found = true
+				}
+			} else if accountName != "" {
+				uniqueStrings.Add(analyses[i].AccountName)
+				errMsgParameter = "account name"
+				if strings.Contains(strings.ToLower(analyses[i].AccountName), accountName) {
+					retAnalyses = append(retAnalyses, analyses[i])
+					found = true
+				}
 			}
 		}
 	}
-	// if nothing was found, throw an error message with the list of analyses names
+	// if nothing was found, throw an error message with the list of account numbers/names/clusters
 	if !found {
 		qn := c.Query.AccountNumber
-		if isKubernetesRequest {
+		if c.Query.AccountName != "" {
+			qn = c.Query.AccountName
+		} else if isKubernetesRequest {
 			qn = c.Query.K8sCluster
 		}
 
-		retErr = fmt.Sprintf(`no account or cluster found with the name '%s'. Existing names are:\n`, qn)
-		for i := 0; i < len(analyses); i++ {
-			if isKubernetesRequest {
-				retErr = fmt.Sprintf("%s\"%s\"\n", retErr, analyses[i].AnalysisName)
-			} else {
-				retErr = fmt.Sprintf("%s\"%s\"\n", retErr, analyses[i].AccountId)
-			}
-		}
+		retErr = fmt.Sprintf("no %s found named '%s'. Existing %ss are:\n", errMsgParameter, qn, errMsgParameter)
+		retErr += uniqueStrings.CsvStrWithNewLine()
 		return nil, errors.New(retErr)
 	}
 	// set the analysis ids as well
@@ -331,7 +343,7 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 	}
 }
 
-// func (c *Client) GetRecommendations(tech string, analysisId string) (*[]DensifyRecommendations, error) {
+// pull a list of recommendations from the Densify API
 func (c *Client) GetDensifyRecommendations() (*[]DensifyRecommendation, error) {
 	// make sure a query has been defined
 	if c.Query == nil {
@@ -409,6 +421,56 @@ func (q *DensifyAPIQuery) isKubernetesRequest() bool {
 	default:
 		return false
 	}
+}
+
+// pull a list of recommendations from the Densify API
+func (c *Client) LoadDensifyInstanceGovernance(reco *DensifyRecommendation) error {
+	// make sure a query has been defined
+	if c.Query == nil {
+		return fmt.Errorf("you must specify a query first")
+	}
+	// check if we have a recommendation and EntityId
+	if reco == nil || reco.EntityId == "" {
+		return fmt.Errorf(`no Densify recommendation with an EntityId found; make sure you call GetRecommendation() first`)
+	}
+
+	// url: baseurl + /systems/entityid/analysis-details?target=all_instances
+	url := fmt.Sprintf("%s/systems/%s/analysis-details?target=all_instances", c.BaseURL, reco.EntityId)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		// handle error
+		return err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.ApiToken))
+	req.Header.Set("Cache-Control", "no-cache")
+	req.Header.Set("Accept", "application/json")
+
+	response, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	//Read the response body
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+
+	var instGov DensifyInstanceGovernance
+	err = json.Unmarshal(body, &instGov)
+	// Check for errors
+	if err != nil {
+		return errors.New("JSON decode error: " + err.Error())
+	}
+	// check if we received something else from the api
+	if instGov.Message != "" {
+		return fmt.Errorf("encountered an error: %s", instGov.Message)
+	}
+
+	// add it to the current recommendation
+	reco.InstanceGovernance = instGov
+	return nil
 }
 
 func (q *DensifyAPIQuery) validate() error {

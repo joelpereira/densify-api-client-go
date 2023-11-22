@@ -93,6 +93,8 @@ type DensifyRecommendation struct {
 	RunningHours          int64     `json:"runningHours"`
 	ControllerType        string    `json:"controllerType"`
 	Namespace             string    `json:"namespace"`
+
+	InstanceGovernance DensifyInstanceGovernance `json:"instanceGovernance"`
 }
 
 type AuditInfo struct {
@@ -111,6 +113,38 @@ type AuditInfoWorkloadDataLast30 struct {
 	LastDate  int64 `json:"lastDate"`
 	TotalDays int64 `json:"totalDays"`
 	SeenDays  int64 `json:"seenDays"`
+}
+
+type DensifyInstanceGovernance struct {
+	CurrentInstance DensifyInstanceGovernanceCurrent  `json:"current"`
+	OptimalInstance DensifyInstanceGovernanceOptimal  `json:"optimal"`
+	Targets         []DensifyInstanceGovernanceTarget `json:"targets"`
+
+	Status  int    `json:"status"`  // if there's an error, this will be populated
+	Message string `json:"message"` // if there's an error, this will be populated
+}
+
+type DensifyInstanceGovernanceCurrent struct {
+	EntityId      string `json:"entityId"`
+	DisplayName   string `json:"displayName"`
+	ResourceId    string `json:"resourceId"`
+	ResourceGroup string `json:"resourceGroup"`
+	InstanceType  string `json:"instanceType"`
+	BlendedScore  int    `json:"blendedScore"`
+	Compatability string `json:"compatability"`
+}
+
+type DensifyInstanceGovernanceOptimal struct {
+	InstanceType       string `json:"instanceType"`
+	BlendedScore       int    `json:"blendedScore"`
+	Compatability      string `json:"compatability"`
+	RecommendationType string `json:"recommendationType"`
+}
+
+type DensifyInstanceGovernanceTarget struct {
+	InstanceType  string `json:"instance_type"`
+	BlendedScore  int    `json:"blended_score"`
+	Compatability string `json:"compatability"`
 }
 
 // this checks if a change has been approved (by looking at the ApprovalType) and returns the RecommendedType, otherwise it will return the CurrentType.
