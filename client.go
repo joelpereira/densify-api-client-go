@@ -423,8 +423,8 @@ func (q *DensifyAPIQuery) isKubernetesRequest() bool {
 	}
 }
 
-// pull a list of recommendations from the Densify API
-func (c *Client) LoadDensifyInstanceGovernance(reco *DensifyRecommendation) error {
+// Pull a list of recommendations from the Densify API; spendTolerance "1.2" means anything more than 120% of optimal would move from "OK" to "Outside Spend Tolerance." Zero (0) means don't set spend tolerance.
+func (c *Client) LoadDensifyInstanceGovernanceAllInstances(reco *DensifyRecommendation, spendTolerance float32) error {
 	// make sure a query has been defined
 	if c.Query == nil {
 		return fmt.Errorf("you must specify a query first")
@@ -436,6 +436,10 @@ func (c *Client) LoadDensifyInstanceGovernance(reco *DensifyRecommendation) erro
 
 	// url: baseurl + /systems/entityid/analysis-details?target=all_instances
 	url := fmt.Sprintf("%s/systems/%s/analysis-details?target=all_instances", c.BaseURL, reco.EntityId)
+	// add spend tolerance
+	if spendTolerance > 0 {
+		url = fmt.Sprintf("%s&spendTolerance=%f", url, spendTolerance)
+	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		// handle error

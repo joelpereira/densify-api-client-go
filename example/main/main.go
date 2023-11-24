@@ -54,12 +54,12 @@ func main() {
 		AccountNumber: "bc009556-bc00-4d00-00bc-bc03322990d3",
 		SystemName:    "st01-pro-rais-266",
 	}
-	densifyAPIQuery = densify.DensifyAPIQuery{
-		AnalysisTechnology: "aws",
-		AccountName:        "general services",
-		// AccountNumber: "bc009556-bc00-4d00-00bc-bc03322990d3",
-		SystemName: "asop-dev-io-244",
-	}
+	// densifyAPIQuery = densify.DensifyAPIQuery{
+	// 	AnalysisTechnology: "aws",
+	// 	AccountName:        "general services",
+	// 	// AccountNumber: "bc009556-bc00-4d00-00bc-bc03322990d3",
+	// 	SystemName: "asop-dev-io-244",
+	// }
 
 	err = client.ConfigureQuery(&densifyAPIQuery)
 	if err != nil {
@@ -81,24 +81,26 @@ func main() {
 	}
 	fmt.Printf("GET RECOMMENDATION: '%v'\n\n", recommendation)
 
-	err = client.LoadDensifyInstanceGovernance(recommendation)
+	err = client.LoadDensifyInstanceGovernanceAllInstances(recommendation, 1.2)
 	if err != nil {
 		fmt.Printf("GET INSTANCE GOVERNANCE: ERROR: '%v'\n\n", err.Error())
 		return
 	}
 	fmt.Printf("GET INSTANCE GOVERNANCE: '%v'\n\n", recommendation.InstanceGovernance)
 
-	// recommendations, err := client.GetRecommendations()
-	// if err != nil {
-	// 	fmt.Printf("GET ANALYSIS: ERROR: '%v'\n\n", err.Error())
-	// 	return
-	// }
-
-	// fmt.Println("Recommendations:::")
-	// fmt.Println(recommendations)
+	l, err := recommendation.GetInstanceGovernanceSpendTolerance()
+	if err != nil {
+		fmt.Printf("InstanceGovernance ERROR: '%v'\n\n", err.Error())
+		return
+	}
+	fmt.Printf("GET INSTANCE GOVERNANCE: '%v'\n\n", l)
+	fmt.Printf("GET INSTANCE GOVERNANCE Total Length: '%d'\n\n", l.TotalLength())
+	fmt.Printf("GET INSTANCE GOVERNANCE Sorted Keys: %v\n\n", l.GetSortedScoreList())
+	fmt.Printf("GET INSTANCE GOVERNANCE Lowest Score: '%d'\n\n", l.GetMinScore())
+	fmt.Printf("GET INSTANCE GOVERNANCE Highest Score: '%d'\n\n", l.GetMaxScore())
 
 	// tf := client.ConvertRecommendationsToTF(recommendations)
-	// fmt.Println("TF format:::")
+	// fmt.Println("Terraform Format:")
 	// fmt.Println(tf)
 
 	// check if token is expired
