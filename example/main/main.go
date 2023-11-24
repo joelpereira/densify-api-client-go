@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/joelpereira/densify-api-cient-go"
+	"github.com/joelpereira/densify-api-client-go"
 )
 
 func main() {
