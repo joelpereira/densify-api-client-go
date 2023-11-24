@@ -22,8 +22,15 @@ func (l *DensifyGovernanceInstanceList) LengthInKey(score int) int {
 	return len(l.InstanceList[score])
 }
 func (l *DensifyGovernanceInstanceList) TotalLength() int {
-	// TODO::: get total length within all keys
-	return len(l.InstanceList)
+	if l.InstanceList == nil || l.Length() == 0 {
+		return 0
+	}
+	keys := l.GetSortedScoreList() // return first one in the sorted list
+	length := 0
+	for i := 0; i < len(keys); i++ {
+		length += len(l.InstanceList[keys[i]])
+	}
+	return length
 }
 
 func (l *DensifyGovernanceInstanceList) AddNode(instance string, score int) {
