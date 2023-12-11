@@ -94,8 +94,8 @@ type DensifyRecommendation struct {
 	ControllerType        string    `json:"controllerType"`
 	Namespace             string    `json:"namespace"`
 
-	ContainerRecommendations []DensifyContainerRecommendation
-	InstanceGovernance       DensifyInstanceGovernance `json:"instanceGovernance"`
+	Containers         []DensifyContainerRecommendation `json:"containers"`
+	InstanceGovernance DensifyInstanceGovernance        `json:"instanceGovernance"`
 }
 
 type AuditInfo struct {
@@ -136,6 +136,7 @@ type DensifyContainerRecommendation struct {
 	RunningHours          int64     `json:"runningHours"`
 	ControllerType        string    `json:"controllerType"`
 	Namespace             string    `json:"namespace"`
+	ApprovalType          string    `json:"approvalType"`
 }
 
 type DensifyInstanceGovernance struct {
@@ -195,6 +196,22 @@ func (r *DensifyRecommendation) GetApprovedType() string {
 }
 
 // adds the container recommendation to the list of containers
-func (r *DensifyRecommendation) AddContainerToPod(DensifyRecommendation) {
-
+func (pod *DensifyRecommendation) AddContainerToPod(reco DensifyRecommendation) {
+	c := DensifyContainerRecommendation{
+		Container:             reco.Container,
+		Cluster:               reco.Cluster,
+		Namespace:             reco.Namespace,
+		PodService:            reco.PodService,
+		ControllerType:        reco.ControllerType,
+		CurrentCpuRequest:     reco.CurrentCpuRequest,
+		CurrentCpuLimit:       reco.CurrentCpuLimit,
+		CurrentMemRequest:     reco.CurrentMemRequest,
+		CurrentMemLimit:       reco.CurrentMemLimit,
+		RecommendedCpuRequest: reco.RecommendedCpuRequest,
+		RecommendedCpuLimit:   reco.RecommendedCpuLimit,
+		RecommendedMemRequest: reco.RecommendedMemRequest,
+		RecommendedMemLimit:   reco.RecommendedMemLimit,
+		ApprovalType:          reco.ApprovalType,
+	}
+	pod.Containers = append(pod.Containers, c)
 }

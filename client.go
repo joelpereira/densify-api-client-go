@@ -61,6 +61,8 @@ type DensifyAPIQuery struct {
 	FallbackInstance   string
 	FallbackCPURequest string
 	FallbackMemRequest string
+	FallbackCPULimit   string
+	FallbackMemLimit   string
 }
 
 func (q *DensifyAPIQuery) setValuesToLowercase() {
