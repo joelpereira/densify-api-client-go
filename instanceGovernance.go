@@ -78,19 +78,19 @@ func (l *DensifyGovernanceInstanceList) GetScoreItems(score int) map[string]Dens
 }
 
 func (r *DensifyRecommendation) GetInstanceGovernanceOK() (*DensifyGovernanceInstanceList, error) {
-	return r.GetInstanceGovernance("OK")
+	return r.GetInstanceGovernanceCompatLevel("OK")
 }
 func (r *DensifyRecommendation) GetInstanceGovernanceIncompatible() (*DensifyGovernanceInstanceList, error) {
-	return r.GetInstanceGovernance("Technically Incompatible")
+	return r.GetInstanceGovernanceCompatLevel("Technically Incompatible")
 }
 func (r *DensifyRecommendation) GetInstanceGovernanceInsufficientResources() (*DensifyGovernanceInstanceList, error) {
-	return r.GetInstanceGovernance("Insufficient Resources")
+	return r.GetInstanceGovernanceCompatLevel("Insufficient Resources")
 }
 func (r *DensifyRecommendation) GetInstanceGovernanceSpendTolerance() (*DensifyGovernanceInstanceList, error) {
-	return r.GetInstanceGovernance("Outside Spend Tolerance")
+	return r.GetInstanceGovernanceCompatLevel("Outside Spend Tolerance")
 }
 
-func (r *DensifyRecommendation) GetInstanceGovernance(compatabilityLevel string) (*DensifyGovernanceInstanceList, error) {
+func (r *DensifyRecommendation) GetInstanceGovernanceCompatLevel(compatabilityLevel string) (*DensifyGovernanceInstanceList, error) {
 	targets := r.InstanceGovernance.getCompatabilityList(compatabilityLevel)
 	if targets == nil {
 		return nil, fmt.Errorf("no instance governance list available for instance: %s", r.Name)

@@ -94,7 +94,8 @@ type DensifyRecommendation struct {
 	ControllerType        string    `json:"controllerType"`
 	Namespace             string    `json:"namespace"`
 
-	InstanceGovernance DensifyInstanceGovernance `json:"instanceGovernance"`
+	ContainerRecommendations []DensifyContainerRecommendation
+	InstanceGovernance       DensifyInstanceGovernance `json:"instanceGovernance"`
 }
 
 type AuditInfo struct {
@@ -113,6 +114,28 @@ type AuditInfoWorkloadDataLast30 struct {
 	LastDate  int64 `json:"lastDate"`
 	TotalDays int64 `json:"totalDays"`
 	SeenDays  int64 `json:"seenDays"`
+}
+
+type DensifyContainerRecommendation struct {
+	Container             string    `json:"container"`
+	Cluster               string    `json:"cluster"`
+	HostName              string    `json:"hostName"`
+	EstimatedSavings      FloatType `json:"estimatedSavings"`
+	TotalNetSavings       FloatType `json:"totalNetSavings"`
+	DisplayName           string    `json:"displayName"`
+	PodService            string    `json:"podService"`
+	CurrentCount          int64     `json:"currentCount"`
+	CurrentCpuRequest     int64     `json:"currentCpuRequest"`
+	CurrentCpuLimit       int64     `json:"currentCpuLimit"`
+	CurrentMemRequest     int64     `json:"currentMemRequest"`
+	CurrentMemLimit       int64     `json:"currentMemLimit"`
+	RecommendedCpuRequest int64     `json:"recommendedCpuRequest"`
+	RecommendedCpuLimit   int64     `json:"recommendedCpuLimit"`
+	RecommendedMemRequest int64     `json:"recommendedMemRequest"`
+	RecommendedMemLimit   int64     `json:"recommendedMemLimit"`
+	RunningHours          int64     `json:"runningHours"`
+	ControllerType        string    `json:"controllerType"`
+	Namespace             string    `json:"namespace"`
 }
 
 type DensifyInstanceGovernance struct {
@@ -142,9 +165,10 @@ type DensifyInstanceGovernanceOptimal struct {
 }
 
 type DensifyInstanceGovernanceTarget struct {
-	InstanceType  string `json:"instance_type"`
-	BlendedScore  int    `json:"blended_score"`
-	Compatability string `json:"compatability"`
+	InstanceType          string   `json:"instance_type"`
+	BlendedScore          int      `json:"blended_score"`
+	Compatability         string   `json:"compatability"` // Values are: OK or Incompatible
+	IncompatibilityReason []string `json:"incompatibilityReason"`
 }
 
 // this checks if a change has been approved (by looking at the ApprovalType) and returns the RecommendedType, otherwise it will return the CurrentType.
@@ -168,4 +192,9 @@ func (r *DensifyRecommendation) GetApprovedType() string {
 		// specific recommendation is approved and specified in ApprovalType
 		return r.ApprovalType
 	}
+}
+
+// adds the container recommendation to the list of containers
+func (r *DensifyRecommendation) AddContainerToPod(DensifyRecommendation) {
+
 }

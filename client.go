@@ -55,7 +55,7 @@ type DensifyAPIQuery struct {
 	K8sCluster        string // the k8s cluster to look for
 	K8sNamespace      string // the k8s namespace to look for
 	K8sPodName        string // the k8s pod name to look for
-	K8sContainerName  string // the k8s container name to look for
+	K8sContainerName  string // the k8s container name to look for (optional)
 	K8sControllerType string // the controller type used; ex. Deployment
 
 	FallbackInstance   string
@@ -308,6 +308,7 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 	}
 	// go through the list of recommendations and look for the entity name provided
 	count := len(*recos)
+	var reco DensifyRecommendation
 	for i := 0; i < count; i++ {
 		if isKubernetesRequest {
 			// check the namespace and pod name as well
@@ -315,9 +316,21 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 			recoNamespace := strings.ToLower((*recos)[i].Namespace)
 			recoPodName := strings.ToLower((*recos)[i].PodService)
 			recoControllerType := strings.ToLower((*recos)[i].ControllerType)
-			if recoNamespace == c.Query.K8sNamespace && recoControllerType == c.Query.K8sControllerType && recoPodName == c.Query.K8sPodName && recoName == c.Query.K8sContainerName {
-				reco := (*recos)[i]
-				return &reco, nil
+			if recoNamespace == c.Query.K8sNamespace && recoControllerType == c.Query.K8sControllerType && recoPodName == c.Query.K8sPodName {
+				if c.Query.K8sContainerName != "" {
+					// if a container name was provided, only return that one container, rather than the whole pod (which could have multiple containers)
+					if recoName == c.Query.K8sContainerName {
+						reco := (*recos)[i]
+						// also manually add the container recommendation(s) to the internal list
+						reco.AddContainerToPod((*recos)[i])
+						return &reco, nil
+					}
+				} else {
+					// no container_name was provided in the query, so let's add to the pod (list of containers)
+					reco := (*recos)[i]
+					// also manually add the container recommendation(s) to the internal list
+					reco.AddContainerToPod((*recos)[i])
+				}
 			}
 		} else {
 			recoName := strings.ToLower((*recos)[i].Name)
@@ -331,13 +344,17 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 			}
 		}
 	}
+	// return the recommendation if it exists
+	if isKubernetesRequest && reco.Namespace != "" {
+		return &reco, nil
+	}
 
 	if c.Query.SkipErrors {
 		return nil, nil
 	}
 	// return a different error msg if it's a cloud vs k8s query
 	if isKubernetesRequest {
-		return nil, fmt.Errorf(`could not find a Densify recommendation for container (%s) in namespace (%s), controller (%s), pod name (%s)`, c.Query.K8sContainerName, c.Query.K8sNamespace, c.Query.K8sControllerType, c.Query.K8sPodName)
+		return nil, fmt.Errorf(`could not find a Densify recommendation for pod (%s) in namespace (%s), controller (%s), container name (%s)`, c.Query.K8sPodName, c.Query.K8sNamespace, c.Query.K8sControllerType, c.Query.K8sContainerName)
 	} else {
 		return nil, fmt.Errorf("could not find a Densify recommendation named: %s", c.Query.SystemName)
 	}
@@ -485,7 +502,7 @@ func (q *DensifyAPIQuery) validate() error {
 	// validate the query parameters passed are sufficient
 	if q.isKubernetesRequest() {
 		// k8s validation
-		if q.K8sCluster == "" || q.K8sNamespace == "" || q.K8sControllerType == "" || q.K8sPodName == "" || q.K8sContainerName == "" {
+		if q.K8sCluster == "" || q.K8sNamespace == "" || q.K8sControllerType == "" || q.K8sPodName == "" {
 			return fmt.Errorf("query must have required k8s fields: cluster, namespace, controllerType, podName, containerName")
 		}
 		if !q.isValidControllerType() {
