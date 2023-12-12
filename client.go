@@ -322,14 +322,14 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 				if c.Query.K8sContainerName != "" {
 					// if a container name was provided, only return that one container, rather than the whole pod (which could have multiple containers)
 					if recoName == c.Query.K8sContainerName {
-						reco := (*recos)[i]
+						reco = (*recos)[i]
 						// also manually add the container recommendation(s) to the internal list
 						reco.AddContainerToPod((*recos)[i])
 						return &reco, nil
 					}
 				} else {
 					// no container_name was provided in the query, so let's add to the pod (list of containers)
-					reco := (*recos)[i]
+					reco = (*recos)[i]
 					// also manually add the container recommendation(s) to the internal list
 					reco.AddContainerToPod((*recos)[i])
 				}
@@ -337,7 +337,7 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 		} else {
 			recoName := strings.ToLower((*recos)[i].Name)
 			if recoName == c.Query.SystemName {
-				reco := (*recos)[i]
+				reco = (*recos)[i]
 				// check if the ApprovedType needs a fallback
 				if reco.ApprovedType == "" {
 					reco.ApprovedType = c.Query.FallbackInstance

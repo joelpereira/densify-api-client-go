@@ -5,15 +5,36 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run Main to kdemo system",
+            "name": "Test partner1-Cloud",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${fileDirname}",
             "args": [
-                "https://k4.densifydemo.com:30000",
-                "user2",
-                "Cirba1!",
+                "https://partner1.densify.com:443",
+                "jpereira@densify.com",
+                "Jp3r31r@Jp3r31r@7",
+                "aws",
+                "777999222999",
+                "systemname",
+            ]
+        },
+        {
+            "name": "Test partner1-Container",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${fileDirname}",
+            "args": [
+                "https://partner1.densify.com:443",
+                "jpereira@densify.com",
+                "Jp3r31r@Jp3r31r@7",
+                "k8s",
+                "k8master",
+                "qa-llc",
+                "deployment",
+                "webserver-deployment",
+                // "den-web",
             ]
         }
     ]

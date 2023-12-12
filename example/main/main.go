@@ -28,10 +28,33 @@ func main() {
 		// K8sControllerType: "deployment/daemonset/statefulset/cronjob",
 	}
 
-	fmt.Println("len", len(os.Args))
+	numArgs := len(os.Args)
+	if numArgs < 7 {
+		fmt.Println("Insufficient args provided: ", numArgs)
+		return
+	}
 	instanceURL = os.Args[1]
 	username = os.Args[2]
 	password = os.Args[3]
+	tech := os.Args[4]
+	// cloud
+	account := os.Args[5]
+	system := os.Args[6]
+	// container
+	cluster := ""
+	namespace := ""
+	controller := ""
+	pod := ""
+	container := ""
+	if numArgs > 8 {
+		cluster = os.Args[5]
+		namespace = os.Args[6]
+		controller = os.Args[7]
+		pod = os.Args[8]
+		if numArgs > 9 {
+			container = os.Args[9]
+		}
+	}
 
 	fmt.Printf("Logging in to: %s...\n", instanceURL)
 	client, err := densify.NewClient(&instanceURL, &username, &password)
@@ -49,17 +72,16 @@ func main() {
 
 	// governance
 	densifyAPIQuery = densify.DensifyAPIQuery{
-		AnalysisTechnology: "azure",
+		AnalysisTechnology: tech,
 		// AccountName:        "Mobile Services (Pay-Go)",
-		AccountNumber: "bc009556-bc00-4d00-00bc-bc03322990d3",
-		SystemName:    "st01-pro-rais-266",
+		AccountNumber:     account,
+		SystemName:        system,
+		K8sCluster:        cluster,
+		K8sNamespace:      namespace,
+		K8sControllerType: controller,
+		K8sPodName:        pod,
+		K8sContainerName:  container,
 	}
-	// densifyAPIQuery = densify.DensifyAPIQuery{
-	// 	AnalysisTechnology: "aws",
-	// 	AccountName:        "general services",
-	// 	// AccountNumber: "bc009556-bc00-4d00-00bc-bc03322990d3",
-	// 	SystemName: "asop-dev-io-244",
-	// }
 
 	err = client.ConfigureQuery(&densifyAPIQuery)
 	if err != nil {
