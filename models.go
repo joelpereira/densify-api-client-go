@@ -136,6 +136,7 @@ type DensifyContainerRecommendation struct {
 	RunningHours          int64     `json:"runningHours"`
 	ControllerType        string    `json:"controllerType"`
 	Namespace             string    `json:"namespace"`
+	RecommendationType    string    `json:"recommendationType"`
 	ApprovalType          string    `json:"approvalType"`
 }
 
@@ -196,7 +197,7 @@ func (r *DensifyRecommendation) GetApprovedType() string {
 }
 
 // adds the container recommendation to the list of containers
-func (pod *DensifyRecommendation) AddContainerToPod(reco DensifyRecommendation) {
+func (pod *DensifyRecommendation) AddContainerToPod(reco *DensifyRecommendation) {
 	c := DensifyContainerRecommendation{
 		Container:             reco.Container,
 		Cluster:               reco.Cluster,
@@ -212,6 +213,15 @@ func (pod *DensifyRecommendation) AddContainerToPod(reco DensifyRecommendation) 
 		RecommendedMemRequest: reco.RecommendedMemRequest,
 		RecommendedMemLimit:   reco.RecommendedMemLimit,
 		ApprovalType:          reco.ApprovalType,
+		HostName:              reco.HostName,
 	}
 	pod.Containers = append(pod.Containers, c)
+}
+
+// returns true if the object is empty/nil
+func (r DensifyRecommendation) isEmpty() bool {
+	if r.Name == "" && r.Container == "" && r.Namespace == "" {
+		return true
+	}
+	return false
 }

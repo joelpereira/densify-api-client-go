@@ -324,14 +324,20 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 					if recoName == c.Query.K8sContainerName {
 						reco = (*recos)[i]
 						// also manually add the container recommendation(s) to the internal list
-						reco.AddContainerToPod((*recos)[i])
+						reco.AddContainerToPod(&(*recos)[i])
 						return &reco, nil
 					}
 				} else {
 					// no container_name was provided in the query, so let's add to the pod (list of containers)
-					reco = (*recos)[i]
+					if reco.isEmpty() {
+						reco = (*recos)[i]
+					}
 					// also manually add the container recommendation(s) to the internal list
-					reco.AddContainerToPod((*recos)[i])
+					reco.AddContainerToPod(&(*recos)[i])
+					// if there are multiple containers within the pod, let's clear out the container name
+					if len(reco.Containers) > 1 {
+						reco.Container = "" // clear the container name
+					}
 				}
 			}
 		} else {
