@@ -119,7 +119,7 @@ type AuditInfoWorkloadDataLast30 struct {
 type DensifyContainerRecommendation struct {
 	Container             string    `json:"container"`
 	Cluster               string    `json:"cluster"`
-	HostName              string    `json:"hostName"`
+	EntityId              string    `json:"entityId"`
 	EstimatedSavings      FloatType `json:"estimatedSavings"`
 	TotalNetSavings       FloatType `json:"totalNetSavings"`
 	DisplayName           string    `json:"displayName"`
@@ -138,6 +138,8 @@ type DensifyContainerRecommendation struct {
 	Namespace             string    `json:"namespace"`
 	RecommendationType    string    `json:"recommendationType"`
 	ApprovalType          string    `json:"approvalType"`
+	ApprovedType          string    `json:"approvedType"`
+	DaysRecoUnchanged     int64     `json:"recommSeenCount"`
 }
 
 type DensifyInstanceGovernance struct {
@@ -200,6 +202,7 @@ func (r *DensifyRecommendation) GetApprovedType() string {
 func (pod *DensifyRecommendation) AddContainerToPod(reco *DensifyRecommendation) {
 	c := DensifyContainerRecommendation{
 		Container:             reco.Container,
+		DisplayName:           reco.DisplayName,
 		Cluster:               reco.Cluster,
 		Namespace:             reco.Namespace,
 		PodService:            reco.PodService,
@@ -213,7 +216,10 @@ func (pod *DensifyRecommendation) AddContainerToPod(reco *DensifyRecommendation)
 		RecommendedMemRequest: reco.RecommendedMemRequest,
 		RecommendedMemLimit:   reco.RecommendedMemLimit,
 		ApprovalType:          reco.ApprovalType,
-		HostName:              reco.HostName,
+		ApprovedType:          reco.ApprovedType,
+		EntityId:              reco.EntityId,
+		RecommendationType:    reco.RecommendationType,
+		DaysRecoUnchanged:     reco.RecommSeenCount,
 	}
 	pod.Containers = append(pod.Containers, c)
 }
