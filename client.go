@@ -59,10 +59,10 @@ type DensifyAPIQuery struct {
 	K8sControllerType string // the controller type used; ex. Deployment
 
 	FallbackInstance   string // the fallback instance type in case there is no recommendation yet
-	FallbackCPURequest int64  // the fallback CPU Request in case there is no recommendation yet
-	FallbackMemRequest int64  // the fallback CPU Limit in case there is no recommendation yet
-	FallbackCPULimit   int64  // the fallback Memory Request in case there is no recommendation yet
-	FallbackMemLimit   int64  // the fallback Memory Limit in case there is no recommendation yet
+	FallbackCPURequest string // the fallback CPU Request in case there is no recommendation yet
+	FallbackMemRequest string // the fallback CPU Limit in case there is no recommendation yet
+	FallbackCPULimit   string // the fallback Memory Request in case there is no recommendation yet
+	FallbackMemLimit   string // the fallback Memory Limit in case there is no recommendation yet
 }
 
 func (q *DensifyAPIQuery) setValuesToLowercase() {
@@ -286,12 +286,12 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 func (c *Client) ReturnEmptyRecommendation() *DensifyRecommendation {
 	emptyRecoType := "Client Error - using fallback values"
 	containers := []DensifyContainerRecommendation{{
-		Container:             c.Query.K8sContainerName,
-		RecommendedCpuRequest: c.Query.FallbackCPURequest,
-		RecommendedCpuLimit:   c.Query.FallbackCPULimit,
-		RecommendedMemRequest: c.Query.FallbackMemRequest,
-		RecommendedMemLimit:   c.Query.FallbackMemLimit,
-		RecommendationType:    emptyRecoType,
+		Container:          c.Query.K8sContainerName,
+		FallbackCpuRequest: c.Query.FallbackCPURequest,
+		FallbackCpuLimit:   c.Query.FallbackCPULimit,
+		FallbackMemRequest: c.Query.FallbackMemRequest,
+		FallbackMemLimit:   c.Query.FallbackMemLimit,
+		RecommendationType: emptyRecoType,
 	}}
 	return &DensifyRecommendation{
 		RecommendedType: c.Query.FallbackInstance,

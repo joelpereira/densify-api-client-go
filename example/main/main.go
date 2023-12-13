@@ -82,12 +82,12 @@ func main() {
 		K8sPodName:        pod,
 		K8sContainerName:  container,
 
-		// SkipErrors: true,
+		SkipErrors: true,
 		// FallbackInstance: "m6i.large",
-		FallbackCPURequest: 123,
-		FallbackCPULimit:   321,
-		FallbackMemRequest: 234,
-		FallbackMemLimit:   432,
+		FallbackCPURequest: "123m",
+		FallbackCPULimit:   "321m",
+		FallbackMemRequest: "234Mi",
+		FallbackMemLimit:   "432Mi",
 	}
 
 	err = client.ConfigureQuery(&densifyAPIQuery)
@@ -109,10 +109,12 @@ func main() {
 		return
 	}
 	fmt.Printf("GET RECOMMENDATION: '%v'\n\n", recommendation)
-	fmt.Printf("Recommendation value: '%v'\n\n", recommendation.RecommendedCpuRequest)
-	fmt.Printf("Recommendation value: '%v'\n\n", recommendation.RecommendedCpuLimit)
-	fmt.Printf("Recommendation value: '%v'\n\n", recommendation.RecommendedMemRequest)
-	fmt.Printf("Recommendation value: '%v'\n\n", recommendation.RecommendedMemLimit)
+	if len(recommendation.Containers) >= 1 {
+		fmt.Printf("Recommendation value: '%v'\n\n", recommendation.Containers[0].FallbackCpuRequest)
+		fmt.Printf("Recommendation value: '%v'\n\n", recommendation.Containers[0].FallbackCpuLimit)
+		fmt.Printf("Recommendation value: '%v'\n\n", recommendation.Containers[0].FallbackMemRequest)
+		fmt.Printf("Recommendation value: '%v'\n\n", recommendation.Containers[0].FallbackMemLimit)
+	}
 
 	// INSTANCE GOVERNANCE
 	err = client.LoadDensifyInstanceGovernanceAllInstances(recommendation, 1.2)

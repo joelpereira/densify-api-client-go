@@ -133,6 +133,10 @@ type DensifyContainerRecommendation struct {
 	RecommendedCpuLimit   int64     `json:"recommendedCpuLimit"`
 	RecommendedMemRequest int64     `json:"recommendedMemRequest"`
 	RecommendedMemLimit   int64     `json:"recommendedMemLimit"`
+	FallbackCpuRequest    string    `json:"fallbackCpuRequest"`
+	FallbackCpuLimit      string    `json:"fallbackCpuLimit"`
+	FallbackMemRequest    string    `json:"fallbackMemRequest"`
+	FallbackMemLimit      string    `json:"fallbackMemLimit"`
 	RunningHours          int64     `json:"runningHours"`
 	ControllerType        string    `json:"controllerType"`
 	Namespace             string    `json:"namespace"`
