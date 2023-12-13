@@ -353,7 +353,8 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 					reco.AddContainerToPod(&(*recos)[i])
 					// if there are multiple containers within the pod, let's clear out the container name
 					if len(reco.Containers) > 1 {
-						reco.Container = "" // clear the container name
+						reco.Name = reco.PodService // change the (container) name > pod name
+						reco.Container = ""         // clear the container name
 					}
 				}
 			}
