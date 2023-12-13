@@ -283,37 +283,44 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 	return &retAnalyses, nil
 }
 
-// pull the recommendations and look for a specific entity in the list
-func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
-	emptyObj := DensifyRecommendation{
-		RecommendedType:       c.Query.FallbackInstance,
+func (c *Client) ReturnEmptyRecommendation() *DensifyRecommendation {
+	containers := []DensifyContainerRecommendation{{
 		RecommendedCpuRequest: c.Query.FallbackCPURequest,
 		RecommendedCpuLimit:   c.Query.FallbackCPULimit,
 		RecommendedMemRequest: c.Query.FallbackMemRequest,
 		RecommendedMemLimit:   c.Query.FallbackMemLimit,
+	}}
+	return &DensifyRecommendation{
+		RecommendedType: c.Query.FallbackInstance,
+		Containers:      containers,
 	}
+}
+
+// pull the recommendations and look for a specific entity in the list
+func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
+	emptyObj := c.ReturnEmptyRecommendation()
 	// make sure a query has been defined
 	if c.Query == nil {
 		if c.Query.SkipErrors {
-			return &emptyObj, nil
+			return emptyObj, nil
 		}
-		return &emptyObj, fmt.Errorf("you must specify a query first")
+		return emptyObj, fmt.Errorf("you must specify a query first")
 	}
 	err := c.Query.validate()
 	if err != nil {
 		if c.Query.SkipErrors {
-			return &emptyObj, nil
+			return emptyObj, nil
 		}
-		return &emptyObj, err
+		return emptyObj, err
 	}
 
 	isKubernetesRequest := c.Query.isKubernetesRequest()
 	recos, err := c.GetDensifyRecommendations()
 	if err != nil {
 		if c.Query.SkipErrors {
-			return &emptyObj, nil
+			return emptyObj, nil
 		}
-		return &emptyObj, err
+		return emptyObj, err
 	}
 	// go through the list of recommendations and look for the entity name provided
 	count := len(*recos)
@@ -365,13 +372,13 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 	}
 
 	if c.Query.SkipErrors {
-		return &emptyObj, nil
+		return emptyObj, nil
 	}
 	// return a different error msg if it's a cloud vs k8s query
 	if isKubernetesRequest {
-		return &emptyObj, fmt.Errorf(`could not find a Densify recommendation for pod (%s) in namespace (%s), controller (%s), container name (%s)`, c.Query.K8sPodName, c.Query.K8sNamespace, c.Query.K8sControllerType, c.Query.K8sContainerName)
+		return emptyObj, fmt.Errorf(`could not find a Densify recommendation for pod (%s) in namespace (%s), controller (%s), container name (%s)`, c.Query.K8sPodName, c.Query.K8sNamespace, c.Query.K8sControllerType, c.Query.K8sContainerName)
 	} else {
-		return &emptyObj, fmt.Errorf("could not find a Densify recommendation named: %s", c.Query.SystemName)
+		return emptyObj, fmt.Errorf("could not find a Densify recommendation named: %s", c.Query.SystemName)
 	}
 }
 

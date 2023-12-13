@@ -84,10 +84,10 @@ func main() {
 
 		// SkipErrors: true,
 		// FallbackInstance: "m6i.large",
-		// FallbackCPURequest: 123,
-		// FallbackCPULimit:   321,
-		// FallbackMemRequest: 234,
-		// FallbackMemLimit:   432,
+		FallbackCPURequest: 123,
+		FallbackCPULimit:   321,
+		FallbackMemRequest: 234,
+		FallbackMemLimit:   432,
 	}
 
 	err = client.ConfigureQuery(&densifyAPIQuery)
