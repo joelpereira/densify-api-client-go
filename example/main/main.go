@@ -81,6 +81,13 @@ func main() {
 		K8sControllerType: controller,
 		K8sPodName:        pod,
 		K8sContainerName:  container,
+
+		// SkipErrors: true,
+		// FallbackInstance: "m6i.large",
+		// FallbackCPURequest: 123,
+		// FallbackCPULimit:   321,
+		// FallbackMemRequest: 234,
+		// FallbackMemLimit:   432,
 	}
 
 	err = client.ConfigureQuery(&densifyAPIQuery)
@@ -102,7 +109,12 @@ func main() {
 		return
 	}
 	fmt.Printf("GET RECOMMENDATION: '%v'\n\n", recommendation)
+	fmt.Printf("Recommendation value: '%v'\n\n", recommendation.RecommendedCpuRequest)
+	fmt.Printf("Recommendation value: '%v'\n\n", recommendation.RecommendedCpuLimit)
+	fmt.Printf("Recommendation value: '%v'\n\n", recommendation.RecommendedMemRequest)
+	fmt.Printf("Recommendation value: '%v'\n\n", recommendation.RecommendedMemLimit)
 
+	// INSTANCE GOVERNANCE
 	err = client.LoadDensifyInstanceGovernanceAllInstances(recommendation, 1.2)
 	if err != nil {
 		fmt.Printf("GET INSTANCE GOVERNANCE: ERROR: '%v'\n\n", err.Error())

@@ -58,11 +58,11 @@ type DensifyAPIQuery struct {
 	K8sContainerName  string // the k8s container name to look for (optional)
 	K8sControllerType string // the controller type used; ex. Deployment
 
-	FallbackInstance   string
-	FallbackCPURequest string
-	FallbackMemRequest string
-	FallbackCPULimit   string
-	FallbackMemLimit   string
+	FallbackInstance   string // the fallback instance type in case there is no recommendation yet
+	FallbackCPURequest int64  // the fallback CPU Request in case there is no recommendation yet
+	FallbackMemRequest int64  // the fallback CPU Limit in case there is no recommendation yet
+	FallbackCPULimit   int64  // the fallback Memory Request in case there is no recommendation yet
+	FallbackMemLimit   int64  // the fallback Memory Limit in case there is no recommendation yet
 }
 
 func (q *DensifyAPIQuery) setValuesToLowercase() {
@@ -285,34 +285,41 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 
 // pull the recommendations and look for a specific entity in the list
 func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
+	emptyObj := DensifyRecommendation{
+		RecommendedType:       c.Query.FallbackInstance,
+		RecommendedCpuRequest: c.Query.FallbackCPURequest,
+		RecommendedCpuLimit:   c.Query.FallbackCPULimit,
+		RecommendedMemRequest: c.Query.FallbackMemRequest,
+		RecommendedMemLimit:   c.Query.FallbackMemLimit,
+	}
 	// make sure a query has been defined
 	if c.Query == nil {
 		if c.Query.SkipErrors {
-			return nil, nil
+			return &emptyObj, nil
 		}
-		return nil, fmt.Errorf("you must specify a query first")
+		return &emptyObj, fmt.Errorf("you must specify a query first")
 	}
 	err := c.Query.validate()
 	if err != nil {
 		if c.Query.SkipErrors {
-			return nil, nil
+			return &emptyObj, nil
 		}
-		return nil, err
+		return &emptyObj, err
 	}
 
 	isKubernetesRequest := c.Query.isKubernetesRequest()
 	recos, err := c.GetDensifyRecommendations()
 	if err != nil {
 		if c.Query.SkipErrors {
-			return nil, nil
+			return &emptyObj, nil
 		}
-		return nil, err
+		return &emptyObj, err
 	}
 	// go through the list of recommendations and look for the entity name provided
 	count := len(*recos)
 	var reco DensifyRecommendation
 	for i := 0; i < count; i++ {
-		if isKubernetesRequest {
+		if isKubernetesRequest { // kubernetes recommendation
 			// check the namespace and pod name as well
 			recoName := strings.ToLower((*recos)[i].Container)
 			recoNamespace := strings.ToLower((*recos)[i].Namespace)
@@ -323,12 +330,12 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 					// if a container name was provided, only return that one container, rather than the whole pod (which could have multiple containers)
 					if recoName == c.Query.K8sContainerName {
 						reco = (*recos)[i]
-						// also manually add the container recommendation(s) to the internal list
+						// also manually add the container recommendation(s) to the pod list of containers
 						reco.AddContainerToPod(&(*recos)[i])
 						return &reco, nil
 					}
 				} else {
-					// no container_name was provided in the query, so let's add to the pod (list of containers)
+					// no container_name was provided in the query, so let's add to the pod list of containers
 					if reco.isEmpty() {
 						reco = (*recos)[i]
 					}
@@ -340,7 +347,7 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 					}
 				}
 			}
-		} else {
+		} else { // cloud instance recommendation
 			recoName := strings.ToLower((*recos)[i].Name)
 			if recoName == c.Query.SystemName {
 				reco = (*recos)[i]
@@ -358,14 +365,18 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 	}
 
 	if c.Query.SkipErrors {
-		return nil, nil
+		return &emptyObj, nil
 	}
 	// return a different error msg if it's a cloud vs k8s query
 	if isKubernetesRequest {
-		return nil, fmt.Errorf(`could not find a Densify recommendation for pod (%s) in namespace (%s), controller (%s), container name (%s)`, c.Query.K8sPodName, c.Query.K8sNamespace, c.Query.K8sControllerType, c.Query.K8sContainerName)
+		return &emptyObj, fmt.Errorf(`could not find a Densify recommendation for pod (%s) in namespace (%s), controller (%s), container name (%s)`, c.Query.K8sPodName, c.Query.K8sNamespace, c.Query.K8sControllerType, c.Query.K8sContainerName)
 	} else {
-		return nil, fmt.Errorf("could not find a Densify recommendation named: %s", c.Query.SystemName)
+		return &emptyObj, fmt.Errorf("could not find a Densify recommendation named: %s", c.Query.SystemName)
 	}
+}
+
+func (r *DensifyContainerRecommendation) AddFallbackValues() {
+
 }
 
 // pull a list of recommendations from the Densify API
