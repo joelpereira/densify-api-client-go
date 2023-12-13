@@ -284,11 +284,14 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 }
 
 func (c *Client) ReturnEmptyRecommendation() *DensifyRecommendation {
+	emptyRecoType := "Client Error - using fallback values"
 	containers := []DensifyContainerRecommendation{{
+		Container:             c.Query.K8sContainerName,
 		RecommendedCpuRequest: c.Query.FallbackCPURequest,
 		RecommendedCpuLimit:   c.Query.FallbackCPULimit,
 		RecommendedMemRequest: c.Query.FallbackMemRequest,
 		RecommendedMemLimit:   c.Query.FallbackMemLimit,
+		RecommendationType:    emptyRecoType,
 	}}
 	return &DensifyRecommendation{
 		RecommendedType: c.Query.FallbackInstance,
