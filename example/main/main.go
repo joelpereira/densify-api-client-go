@@ -57,7 +57,7 @@ func main() {
 	}
 
 	fmt.Printf("Logging in to: %s...\n", instanceURL)
-	client, err := densify.NewClient(&instanceURL, &username, &password)
+	client, err := densify.NewDensifyClient(&instanceURL, &username, &password)
 	if err != nil {
 		fmt.Printf("ERROR: '%v'\n\n", err)
 		return

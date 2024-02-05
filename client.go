@@ -29,7 +29,7 @@ import (
 // var apiToken string
 // var apiTokenExpiry int64
 
-type Client struct {
+type DensifyClient struct {
 	HTTPClient     *http.Client
 	BaseURL        string
 	ApiUserName    string
@@ -45,37 +45,6 @@ type Client struct {
 	AnalysisIds []string // store the analysis ids that make up the account or cluster (which can be separated across multiple analyses)
 }
 
-type DensifyAPIQuery struct {
-	AnalysisTechnology string // aws, azure, gcp, k8s
-	AccountName        string // account name to look for
-	AccountNumber      string // account number to look for
-	SystemName         string // the entity name to pull recommendations for
-	SkipErrors         bool   // skip/ignore errors
-
-	K8sCluster        string // the k8s cluster to look for
-	K8sNamespace      string // the k8s namespace to look for
-	K8sPodName        string // the k8s pod name to look for
-	K8sContainerName  string // the k8s container name to look for (optional)
-	K8sControllerType string // the controller type used; ex. Deployment
-
-	FallbackInstance   string // the fallback instance type in case there is no recommendation yet
-	FallbackCPURequest string // the fallback CPU Request in case there is no recommendation yet
-	FallbackMemRequest string // the fallback CPU Limit in case there is no recommendation yet
-	FallbackCPULimit   string // the fallback Memory Request in case there is no recommendation yet
-	FallbackMemLimit   string // the fallback Memory Limit in case there is no recommendation yet
-}
-
-func (q *DensifyAPIQuery) setValuesToLowercase() {
-	q.AnalysisTechnology = strings.ToLower(q.AnalysisTechnology)
-	q.AccountName = strings.ToLower(q.AccountName)
-	q.AccountNumber = strings.ToLower(q.AccountNumber)
-	q.SystemName = strings.ToLower(q.SystemName)
-	q.K8sCluster = strings.ToLower(q.K8sCluster)
-	q.K8sNamespace = strings.ToLower(q.K8sNamespace)
-	q.K8sPodName = strings.ToLower(q.K8sPodName)
-	q.K8sControllerType = strings.ToLower(q.K8sControllerType)
-}
-
 type AuthResponse struct {
 	ApiToken string
 	Expires  int64
@@ -86,8 +55,8 @@ type AuthError struct {
 	/* variables */
 }
 
-// NewClient -
-func NewClient(instanceURL, username, password *string) (*Client, error) {
+// New Densify API Client
+func NewDensifyClient(instanceURL, username, password *string) (*DensifyClient, error) {
 	if instanceURL == nil || username == nil || password == nil {
 		return nil, fmt.Errorf(`instanceURL, username, password cannot be empty`)
 	}
@@ -97,7 +66,7 @@ func NewClient(instanceURL, username, password *string) (*Client, error) {
 		pre = `https://`
 	}
 
-	c := Client{
+	c := DensifyClient{
 		HTTPClient: &http.Client{Timeout: 60 * time.Second},
 	}
 
@@ -113,7 +82,7 @@ func NewClient(instanceURL, username, password *string) (*Client, error) {
 	return &c, nil
 }
 
-func (c *Client) ConfigureQuery(query *DensifyAPIQuery) error {
+func (c *DensifyClient) ConfigureQuery(query *DensifyAPIQuery) error {
 	// validate the query has all the required values
 	if query == nil {
 		return fmt.Errorf("query cannot be empty/nil")
@@ -134,8 +103,7 @@ func (c *Client) ConfigureQuery(query *DensifyAPIQuery) error {
 	return nil // no error
 }
 
-// func (c *Client) getToken(instanceURL string, username string, password string) (string, error) {
-func (c *Client) GetNewAuthToken() (*AuthResponse, error) {
+func (c *DensifyClient) GetNewAuthToken() (*AuthResponse, error) {
 	urlAuth := fmt.Sprintf("%s%s", c.BaseURL, "/authorize")
 
 	postBody, _ := json.Marshal(map[string]string{
@@ -185,7 +153,7 @@ func (c *Client) GetNewAuthToken() (*AuthResponse, error) {
 	return &authResponse, nil
 }
 
-func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
+func (c *DensifyClient) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 	// make sure a query has been defined
 	if c.Query == nil {
 		return nil, fmt.Errorf("you must specify a query first")
@@ -283,25 +251,9 @@ func (c *Client) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 	return &retAnalyses, nil
 }
 
-func (c *Client) ReturnEmptyRecommendation() *DensifyRecommendation {
-	emptyRecoType := "Client Error - using fallback values"
-	containers := []DensifyContainerRecommendation{{
-		Container:          c.Query.K8sContainerName,
-		FallbackCpuRequest: c.Query.FallbackCPURequest,
-		FallbackCpuLimit:   c.Query.FallbackCPULimit,
-		FallbackMemRequest: c.Query.FallbackMemRequest,
-		FallbackMemLimit:   c.Query.FallbackMemLimit,
-		RecommendationType: emptyRecoType,
-	}}
-	return &DensifyRecommendation{
-		RecommendedType: c.Query.FallbackInstance,
-		Containers:      containers,
-	}
-}
-
 // pull the recommendations and look for a specific entity in the list
-func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
-	emptyObj := c.ReturnEmptyRecommendation()
+func (c *DensifyClient) GetDensifyRecommendation() (*DensifyRecommendation, error) {
+	emptyObj := c.returnEmptyRecommendationWithFallback()
 	// make sure a query has been defined
 	if c.Query == nil {
 		if c.Query.SkipErrors {
@@ -386,12 +338,8 @@ func (c *Client) GetDensifyRecommendation() (*DensifyRecommendation, error) {
 	}
 }
 
-func (r *DensifyContainerRecommendation) AddFallbackValues() {
-
-}
-
 // pull a list of recommendations from the Densify API
-func (c *Client) GetDensifyRecommendations() (*[]DensifyRecommendation, error) {
+func (c *DensifyClient) GetDensifyRecommendations() (*[]DensifyRecommendation, error) {
 	// make sure a query has been defined
 	if c.Query == nil {
 		return nil, fmt.Errorf("you must specify a query first")
@@ -458,20 +406,8 @@ func (c *Client) GetDensifyRecommendations() (*[]DensifyRecommendation, error) {
 	return &retRecos, nil
 }
 
-// check if the query is for Kubernetes/containers
-func (q *DensifyAPIQuery) isKubernetesRequest() bool {
-	switch q.AnalysisTechnology {
-	case "k8s":
-		return true
-	case "kubernetes":
-		return true
-	default:
-		return false
-	}
-}
-
 // Pull a list of recommendations from the Densify API; spendTolerance "1.2" means anything more than 120% of optimal would move from "OK" to "Outside Spend Tolerance." Zero (0) means don't set spend tolerance.
-func (c *Client) LoadDensifyInstanceGovernanceAllInstances(reco *DensifyRecommendation, spendTolerance float32) error {
+func (c *DensifyClient) LoadDensifyInstanceGovernanceAllInstances(reco *DensifyRecommendation, spendTolerance float32) error {
 	// make sure a query has been defined
 	if c.Query == nil {
 		return fmt.Errorf("you must specify a query first")
@@ -524,87 +460,16 @@ func (c *Client) LoadDensifyInstanceGovernanceAllInstances(reco *DensifyRecommen
 	return nil
 }
 
-func (q *DensifyAPIQuery) validate() error {
-	_, err := q.getURIPath()
-	if err != nil {
-		return err
-	}
-	// validate the query parameters passed are sufficient
-	if q.isKubernetesRequest() {
-		// k8s validation
-		if q.K8sCluster == "" || q.K8sNamespace == "" || q.K8sControllerType == "" || q.K8sPodName == "" {
-			return fmt.Errorf("query must have required k8s fields: cluster, namespace, controllerType, podName, containerName")
-		}
-		if !q.isValidControllerType() {
-			return fmt.Errorf("query controller type must be valid: pod, deployment, replicaset, daemonset, statefulset, cronjob, job")
-		}
-	} else {
-		// cloud validation
-		if q.SystemName == "" {
-			return fmt.Errorf("query must have System Name")
-		}
-		if q.AccountNumber == "" && q.AccountName == "" {
-			return fmt.Errorf("query must have Account Name or Account Number")
-		}
-	}
-	// no errors means it's a valid looking query
-	return nil
-}
-
-func (q *DensifyAPIQuery) isValidControllerType() bool {
-	// check the controller types
-	switch strings.ToLower(q.K8sControllerType) {
-	case "deployment":
-		return true
-	case "":
-		return true
-	case "daemonset":
-		return true
-	case "replicaset":
-		return true
-	case "statefulset":
-		return true
-	case "pod":
-		return true
-	case "cronjob":
-		return true
-	case "job":
-		return true
-	default:
-		return false
-	}
-}
-
-// returns the Densify API analysis path based on the technology platform used, ex. aws, azure, gcp, kubernetes
-func (q *DensifyAPIQuery) getURIPath() (string, error) {
-	resp := ""
-	switch q.AnalysisTechnology {
-	case "aws":
-		resp = "/analysis/cloud/aws"
-	case "azure":
-		resp = "/analysis/cloud/azure"
-	case "gcp":
-		resp = "/analysis/cloud/gcp"
-	case "k8s":
-		resp = "/analysis/containers/kubernetes"
-	case "kubernetes":
-		resp = "/analysis/containers/kubernetes"
-	default:
-		return "", errors.New("invalid tech value provided; must be one of the following: aws, azure, gcp, kubernetes, k8s")
-	}
-	return resp, nil
-}
-
-func (c *Client) IsTokenExpired() bool {
+func (c *DensifyClient) IsTokenExpired() bool {
 	now := time.Now().UnixNano() / int64(time.Millisecond)
 	return now >= c.ApiTokenExpiry
 }
 
-func (c *Client) ConvertRecommendationsToTF(recommendations *[]DensifyRecommendation) string {
+func (c *DensifyClient) ConvertRecommendationsToTF(recommendations *[]DensifyRecommendation) string {
 	return c.ConvertRecommendationsToTFWithVarName(recommendations, "densify_recommendations")
 }
 
-func (c *Client) ConvertRecommendationsToTFWithVarName(recommendations *[]DensifyRecommendation, tfVarName string) string {
+func (c *DensifyClient) ConvertRecommendationsToTFWithVarName(recommendations *[]DensifyRecommendation, tfVarName string) string {
 	var sb strings.Builder
 	sb.WriteString(tfVarName + " = {")
 	count := len(*recommendations)
@@ -656,4 +521,20 @@ func (c *Client) ConvertRecommendationsToTFWithVarName(recommendations *[]Densif
 	sb.WriteString("}")
 
 	return sb.String()
+}
+
+func (c *DensifyClient) returnEmptyRecommendationWithFallback() *DensifyRecommendation {
+	emptyRecoType := "Client Error - using fallback values"
+	containers := []DensifyContainerRecommendation{{
+		Container:          c.Query.K8sContainerName,
+		FallbackCpuRequest: c.Query.FallbackCPURequest,
+		FallbackCpuLimit:   c.Query.FallbackCPULimit,
+		FallbackMemRequest: c.Query.FallbackMemRequest,
+		FallbackMemLimit:   c.Query.FallbackMemLimit,
+		RecommendationType: emptyRecoType,
+	}}
+	return &DensifyRecommendation{
+		RecommendedType: c.Query.FallbackInstance,
+		Containers:      containers,
+	}
 }
