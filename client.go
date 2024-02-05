@@ -55,8 +55,15 @@ type AuthError struct {
 	/* variables */
 }
 
+const (
+	apiEndpoint   = "/api/v2"
+	apiAuthorize  = "/authorize"
+	apiContainers = "containers"
+	apiCloud      = "cloud"
+)
+
 // New Densify API Client
-func NewDensifyClient(instanceURL, username, password *string) (*DensifyClient, error) {
+func NewDensifyClient(instanceURL *string, username *string, password *string, timeout_seconds int) (*DensifyClient, error) {
 	if instanceURL == nil || username == nil || password == nil {
 		return nil, fmt.Errorf(`instanceURL, username, password cannot be empty`)
 	}
@@ -67,10 +74,10 @@ func NewDensifyClient(instanceURL, username, password *string) (*DensifyClient, 
 	}
 
 	c := DensifyClient{
-		HTTPClient: &http.Client{Timeout: 60 * time.Second},
+		HTTPClient: &http.Client{Timeout: time.Duration(timeout_seconds) * time.Second},
 	}
 
-	c.BaseURL = fmt.Sprintf("%s%s%s", pre, strings.ToLower(*instanceURL), "/api/v2")
+	c.BaseURL = fmt.Sprintf("%s%s%s", pre, strings.ToLower(*instanceURL), apiEndpoint)
 	c.ApiUserName = *username
 	c.ApiPassword = *password
 
@@ -104,7 +111,7 @@ func (c *DensifyClient) ConfigureQuery(query *DensifyAPIQuery) error {
 }
 
 func (c *DensifyClient) GetNewAuthToken() (*AuthResponse, error) {
-	urlAuth := fmt.Sprintf("%s%s", c.BaseURL, "/authorize")
+	urlAuth := fmt.Sprintf("%s%s", c.BaseURL, apiAuthorize)
 
 	postBody, _ := json.Marshal(map[string]string{
 		"userName": c.ApiUserName,
@@ -115,8 +122,6 @@ func (c *DensifyClient) GetNewAuthToken() (*AuthResponse, error) {
 	if error != nil {
 		return nil, error
 	}
-	// client := &http.Client{}
-	// client = http.Client{Timeout: timeout}
 	response, err := c.HTTPClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -173,7 +178,6 @@ func (c *DensifyClient) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.ApiToken))
 	req.Header.Set("Accept", "application/json")
 
-	// resp, err := http.DefaultClient.Do(req)
 	response, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -199,13 +203,16 @@ func (c *DensifyClient) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 	clusterName := strings.ToLower(c.Query.K8sCluster)
 	found := false
 	isKubernetesRequest := c.Query.isKubernetesRequest()
-	var uniqueStrings UniqueList
-	uniqueStrings.Init()
+
+	// create a unique list of analyses name/number; this is only to be used for error output to list unique account name/numbers (since the Densify API can have duplicate analyses)
+	var uniqueListOfAccounts UniqueList
+	uniqueListOfAccounts.Initialize()
+
 	errMsgParameter := ""
 	for i := 0; i < len(analyses); i++ {
 		// if it's a kubernetes/container request, look at analysis name, and check if it contains the cluster string instead
 		if isKubernetesRequest {
-			uniqueStrings.Add(analyses[i].AnalysisName)
+			uniqueListOfAccounts.Add(analyses[i].AnalysisName)
 			errMsgParameter = "cluster"
 			if strings.Contains(strings.ToLower(analyses[i].AnalysisName), clusterName) {
 				retAnalyses = append(retAnalyses, analyses[i])
@@ -214,14 +221,14 @@ func (c *DensifyClient) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 		} else { // else, look at cloud account
 			// search by account number
 			if accountNumber != "" {
-				uniqueStrings.Add(analyses[i].AccountId)
+				uniqueListOfAccounts.Add(analyses[i].AccountId)
 				errMsgParameter = "account number"
 				if strings.Contains(strings.ToLower(analyses[i].AccountId), accountNumber) {
 					retAnalyses = append(retAnalyses, analyses[i])
 					found = true
 				}
 			} else if accountName != "" {
-				uniqueStrings.Add(analyses[i].AccountName)
+				uniqueListOfAccounts.Add(analyses[i].AccountName)
 				errMsgParameter = "account name"
 				if strings.Contains(strings.ToLower(analyses[i].AccountName), accountName) {
 					retAnalyses = append(retAnalyses, analyses[i])
@@ -240,7 +247,8 @@ func (c *DensifyClient) GetAccountOrCluster() (*[]DensifyAnalysis, error) {
 		}
 
 		retErr = fmt.Sprintf("no %s found named '%s'. Existing %ss are:\n", errMsgParameter, qn, errMsgParameter)
-		retErr += uniqueStrings.CsvStrWithNewLine()
+		// output the list of unique densify analyses (account name/number); this is to avoid duplicate values for ease of reading an error message and not for CSV machine processing.
+		retErr += uniqueListOfAccounts.CsvStrWithNewLine()
 		return nil, errors.New(retErr)
 	}
 	// set the analysis ids as well
@@ -391,9 +399,9 @@ func (c *DensifyClient) GetDensifyRecommendations() (*[]DensifyRecommendation, e
 		count := len(recos)
 		for i := 0; i < count; i++ {
 			if c.Query.isKubernetesRequest() {
-				recos[i].AnalysisType = "containers"
+				recos[i].AnalysisType = apiContainers
 			} else {
-				recos[i].AnalysisType = "cloud"
+				recos[i].AnalysisType = apiCloud
 			}
 			recos[i].AnalysisTechnology = c.Query.AnalysisTechnology
 			recos[i].AccountId = c.Query.AccountNumber
@@ -524,7 +532,7 @@ func (c *DensifyClient) ConvertRecommendationsToTFWithVarName(recommendations *[
 }
 
 func (c *DensifyClient) returnEmptyRecommendationWithFallback() *DensifyRecommendation {
-	emptyRecoType := "Client Error - using fallback values"
+	const emptyRecoType = "Client Error - using fallback values"
 	containers := []DensifyContainerRecommendation{{
 		Container:          c.Query.K8sContainerName,
 		FallbackCpuRequest: c.Query.FallbackCPURequest,
