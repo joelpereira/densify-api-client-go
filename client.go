@@ -453,7 +453,7 @@ func (c *DensifyClient) LoadDensifyInstanceGovernanceAllInstances(reco *DensifyR
 		return err
 	}
 
-	var instGov DensifyInstanceGovernance
+	var instGov DensifyGuardrails
 	err = json.Unmarshal(body, &instGov)
 	// Check for errors
 	if err != nil {
@@ -465,7 +465,7 @@ func (c *DensifyClient) LoadDensifyInstanceGovernanceAllInstances(reco *DensifyR
 	}
 
 	// add it to the current recommendation
-	reco.InstanceGovernance = instGov
+	reco.Guardrails = instGov
 	return nil
 }
 
