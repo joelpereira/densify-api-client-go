@@ -11,11 +11,15 @@
             "mode": "auto",
             "program": "${fileDirname}",
             "args": [
-                "https://partner1.densify.com:443",
+                // "https://partner1.densify.com:443",
+                // "jpereira@densify.com",
+                // "Jp3r31r@Jp3r31r@7",
+                "https://cisco.densify.com:443",
                 "jpereira@densify.com",
-                "Jp3r31r@Jp3r31r@7",
+                "Jp3r31r@Jp3r31r@",
                 "aws",
-                "777999222999",
+                // "777999222999",
+                "907185500391",
                 "systemname",
             ]
         },

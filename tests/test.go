@@ -1,4 +1,4 @@
-package tests
+package main
 
 import (
 	"fmt"
@@ -57,7 +57,7 @@ func main() {
 	}
 
 	fmt.Printf("Logging in to: %s...\n", instanceURL)
-	client, err := densify.NewDensifyClient(&instanceURL, &username, &password)
+	client, err := densify.NewDensifyClient(&instanceURL, &username, &password, 0)
 	if err != nil {
 		fmt.Printf("ERROR: '%v'\n\n", err)
 		return

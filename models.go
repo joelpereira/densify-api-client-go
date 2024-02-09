@@ -94,8 +94,8 @@ type DensifyRecommendation struct {
 	ControllerType        string    `json:"controllerType"`
 	Namespace             string    `json:"namespace"`
 
-	Containers         []DensifyContainerRecommendation `json:"containers"`
-	InstanceGovernance DensifyInstanceGovernance        `json:"instanceGovernance"`
+	Containers []DensifyContainerRecommendation `json:"containers"`
+	Guardrails DensifyGuardrails                `json:"Guardrails"`
 }
 
 type AuditInfo struct {
@@ -146,37 +146,59 @@ type DensifyContainerRecommendation struct {
 	DaysRecoUnchanged     int64     `json:"recommSeenCount"`
 }
 
-type DensifyInstanceGovernance struct {
-	CurrentInstance DensifyInstanceGovernanceCurrent  `json:"current"`
-	OptimalInstance DensifyInstanceGovernanceOptimal  `json:"optimal"`
-	Targets         []DensifyInstanceGovernanceTarget `json:"targets"`
+type DensifyGuardrails struct {
+	CurrentInstance DensifyGuardrailsCurrent  `json:"current"`
+	OptimalInstance DensifyGuardrailsOptimal  `json:"optimal"`
+	Targets         []DensifyGuardrailsTarget `json:"targets"`
 
 	Status  int    `json:"status"`  // if there's an error, this will be populated
 	Message string `json:"message"` // if there's an error, this will be populated
 }
 
-type DensifyInstanceGovernanceCurrent struct {
-	EntityId      string `json:"entityId"`
-	DisplayName   string `json:"displayName"`
-	ResourceId    string `json:"resourceId"`
-	ResourceGroup string `json:"resourceGroup"`
-	InstanceType  string `json:"instanceType"`
-	BlendedScore  int    `json:"blendedScore"`
+type DensifyGuardrailsCurrent struct {
+	EntityId           string    `json:"entityId"`
+	DisplayName        string    `json:"displayName"`
+	ResourceId         string    `json:"resourceId"`
+	InstanceType       string    `json:"instanceType"`
+	ResourceGroup      string    `json:"resourceGroup"`
+	BlendedScore       int       `json:"blendedScore"`
+	Compatability      string    `json:"compatability"`
+	CpuModel           string    `json:"cpuModel"`
+	NumCPUs            int64     `json:"numCpus"`
+	Memory             FloatType `json:"memory"`
+	Generation         int       `json:"generation"`
+	CatalogCost        Currency  `json:"catalogCost"`
+	Uptime             FloatType `json:"predictedUptime"`
+	PercentOptimalCost FloatType `json:"percentOptimalCost"`
+}
+
+type DensifyGuardrailsOptimal struct {
+	InstanceType       string    `json:"instanceType"`
+	BlendedScore       int       `json:"blendedScore"`
+	Compatability      string    `json:"compatability"`
+	RecommendationType string    `json:"recommendationType"`
+	CpuModel           string    `json:"cpuModel"`
+	NumCPUs            int64     `json:"numCpus"`
+	Memory             FloatType `json:"memory"`
+	Generation         int       `json:"generation"`
+	CatalogCost        Currency  `json:"catalogCost"`
+	EffortEstimate     string    `json:"effortEstimate"`
+}
+
+type DensifyGuardrailsTarget struct {
+	InstanceType  string `json:"instance_type"`
+	BlendedScore  int    `json:"blended_score"`
 	Compatability string `json:"compatability"`
-}
+	// IncompatibilityReason []string `json:"incompatibilityReason"`
+	IncompatibilityReason string `json:"incompatibilityReason"`
 
-type DensifyInstanceGovernanceOptimal struct {
-	InstanceType       string `json:"instanceType"`
-	BlendedScore       int    `json:"blendedScore"`
-	Compatability      string `json:"compatability"`
-	RecommendationType string `json:"recommendationType"`
-}
-
-type DensifyInstanceGovernanceTarget struct {
-	InstanceType          string   `json:"instance_type"`
-	BlendedScore          int      `json:"blended_score"`
-	Compatability         string   `json:"compatability"` // Values are: OK or Incompatible
-	IncompatibilityReason []string `json:"incompatibilityReason"`
+	CpuModel           string    `json:"cpuModel"`
+	NumCPUs            int64     `json:"numCpus"`
+	Memory             FloatType `json:"memory"`
+	Generation         int       `json:"generation"`
+	CatalogCost        Currency  `json:"catalogCost"`
+	PercentOptimalCost FloatType `json:"percentOptimalCost"`
+	EffortEstimate     string    `json:"effortEstimate"`
 }
 
 // this checks if a change has been approved (by looking at the ApprovalType) and returns the RecommendedType, otherwise it will return the CurrentType.
