@@ -74,8 +74,7 @@ func NewDensifyClient(instanceURL *string, username *string, password *string, t
 	}
 
 	c := DensifyClient{
-		// HTTPClient: &http.Client{Timeout: time.Duration(timeout_seconds) * time.Second},
-		HTTPClient: &http.Client{Timeout: 200},
+		HTTPClient: &http.Client{Timeout: time.Duration(timeout_seconds) * time.Second},
 	}
 
 	c.BaseURL = fmt.Sprintf("%s%s%s", pre, strings.ToLower(*instanceURL), apiEndpoint)
