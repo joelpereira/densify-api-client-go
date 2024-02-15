@@ -162,7 +162,7 @@ type DensifyGuardrailsCurrent struct {
 	InstanceType       string    `json:"instanceType"`
 	ResourceGroup      string    `json:"resourceGroup"`
 	BlendedScore       int       `json:"blendedScore"`
-	Compatability      string    `json:"compatability"`
+	Compatibility      string    `json:"compatibility"`
 	CpuModel           string    `json:"cpuModel"`
 	NumCPUs            int64     `json:"numCpus"`
 	Memory             FloatType `json:"memory"`
@@ -175,7 +175,7 @@ type DensifyGuardrailsCurrent struct {
 type DensifyGuardrailsOptimal struct {
 	InstanceType       string    `json:"instanceType"`
 	BlendedScore       int       `json:"blendedScore"`
-	Compatability      string    `json:"compatability"`
+	Compatibility      string    `json:"compatibility"`
 	RecommendationType string    `json:"recommendationType"`
 	CpuModel           string    `json:"cpuModel"`
 	NumCPUs            int64     `json:"numCpus"`
@@ -188,7 +188,7 @@ type DensifyGuardrailsOptimal struct {
 type DensifyGuardrailsTarget struct {
 	InstanceType  string `json:"instance_type"`
 	BlendedScore  int    `json:"blended_score"`
-	Compatability string `json:"compatability"`
+	Compatibility string `json:"compatibility"`
 	// IncompatibilityReason []string `json:"incompatibilityReason"`
 	IncompatibilityReason string `json:"incompatibilityReason"`
 
