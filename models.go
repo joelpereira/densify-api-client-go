@@ -186,8 +186,8 @@ type DensifyGuardrailsOptimal struct {
 }
 
 type DensifyGuardrailsTarget struct {
-	InstanceType  string `json:"instance_type"`
-	BlendedScore  int    `json:"blended_score"`
+	InstanceType  string `json:"instanceType"`
+	BlendedScore  int    `json:"blendedScore"`
 	Compatibility string `json:"compatibility"`
 	// IncompatibilityReason []string `json:"incompatibilityReason"`
 	IncompatibilityReason string `json:"incompatibilityReason"`

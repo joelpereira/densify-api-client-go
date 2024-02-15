@@ -7,12 +7,13 @@ import (
 )
 
 type DensifyGuardrailsList struct {
-	Compatibility string                                   `json:"compatability"`
+	Compatibility string                                   `json:"compatibility"`
 	InstanceList  map[int]map[string]DensifyGuardrailsNode `json:"nodeList"`
 }
 type DensifyGuardrailsNode struct {
-	InstanceType string `json:"instance_type"`
-	BlendedScore int    `json:"blended_score"`
+	InstanceType       string  `json:"instanceType"`
+	BlendedScore       int     `json:"blendedScore"`
+	PercentOptimalCost float64 `json:"percentOptimalCost"`
 }
 
 func (l *DensifyGuardrailsList) Length() int {
@@ -33,7 +34,7 @@ func (l *DensifyGuardrailsList) TotalLength() int {
 	return length
 }
 
-func (l *DensifyGuardrailsList) AddNode(instance string, score int) {
+func (l *DensifyGuardrailsList) AddNode(instance string, score int, percentOptimalCost float64) {
 	// check that the main list was instantiated
 	if l.InstanceList == nil {
 		l.InstanceList = map[int]map[string]DensifyGuardrailsNode{}
@@ -46,8 +47,9 @@ func (l *DensifyGuardrailsList) AddNode(instance string, score int) {
 
 	// add item to sub list
 	l.InstanceList[score][instance] = DensifyGuardrailsNode{
-		InstanceType: instance,
-		BlendedScore: score,
+		InstanceType:       instance,
+		BlendedScore:       score,
+		PercentOptimalCost: percentOptimalCost,
 	}
 }
 
@@ -90,8 +92,8 @@ func (r *DensifyRecommendation) GetGuardrailsSpendTolerance() (*DensifyGuardrail
 	return r.GetGuardrailsCompatLevel("Outside Spend Tolerance")
 }
 
-func (r *DensifyRecommendation) GetGuardrailsCompatLevel(compatabilityLevel string) (*DensifyGuardrailsList, error) {
-	targets := r.Guardrails.getCompatibilityList(compatabilityLevel)
+func (r *DensifyRecommendation) GetGuardrailsCompatLevel(compatibilityLevel string) (*DensifyGuardrailsList, error) {
+	targets := r.Guardrails.getCompatibilityList(compatibilityLevel)
 	if targets == nil {
 		return nil, fmt.Errorf("no instance governance list available for instance: %s", r.Name)
 	}
@@ -107,7 +109,7 @@ func (g *DensifyGuardrails) getCompatibilityList(compat string) *DensifyGuardrai
 	for i := 0; i < len(g.Targets); i++ {
 		item := g.Targets[i]
 		if strings.ToLower(item.Compatibility) == compatLowerCase {
-			l.AddNode(item.InstanceType, item.BlendedScore)
+			l.AddNode(item.InstanceType, item.BlendedScore, float64(item.PercentOptimalCost))
 		}
 	}
 
