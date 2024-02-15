@@ -415,7 +415,7 @@ func (c *DensifyClient) GetDensifyRecommendations() (*[]DensifyRecommendation, e
 }
 
 // Pull a list of recommendations from the Densify API; spendTolerance "1.2" means anything more than 120% of optimal would move from "OK" to "Outside Spend Tolerance." Zero (0) means don't set spend tolerance.
-func (c *DensifyClient) LoadDensifyInstanceGovernanceAllInstances(reco *DensifyRecommendation, spendTolerance float32) error {
+func (c *DensifyClient) LoadDensifyGuardrailsAllInstances(reco *DensifyRecommendation, spendTolerance float32) error {
 	// make sure a query has been defined
 	if c.Query == nil {
 		return fmt.Errorf("you must specify a query first")
