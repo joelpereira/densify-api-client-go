@@ -7,7 +7,7 @@ import (
 )
 
 type DensifyGuardrailsList struct {
-	Compatability string                                   `json:"compatability"`
+	Compatibility string                                   `json:"compatability"`
 	InstanceList  map[int]map[string]DensifyGuardrailsNode `json:"nodeList"`
 }
 type DensifyGuardrailsNode struct {
@@ -91,22 +91,22 @@ func (r *DensifyRecommendation) GetGuardrailsSpendTolerance() (*DensifyGuardrail
 }
 
 func (r *DensifyRecommendation) GetGuardrailsCompatLevel(compatabilityLevel string) (*DensifyGuardrailsList, error) {
-	targets := r.Guardrails.getCompatabilityList(compatabilityLevel)
+	targets := r.Guardrails.getCompatibilityList(compatabilityLevel)
 	if targets == nil {
 		return nil, fmt.Errorf("no instance governance list available for instance: %s", r.Name)
 	}
 	return targets, nil
 }
-func (g *DensifyGuardrails) getCompatabilityList(compat string) *DensifyGuardrailsList {
+func (g *DensifyGuardrails) getCompatibilityList(compat string) *DensifyGuardrailsList {
 	l := DensifyGuardrailsList{
-		Compatability: compat,
+		Compatibility: compat,
 		InstanceList:  map[int]map[string]DensifyGuardrailsNode{},
 	}
 
 	compatLowerCase := strings.ToLower(compat)
 	for i := 0; i < len(g.Targets); i++ {
 		item := g.Targets[i]
-		if strings.ToLower(item.Compatability) == compatLowerCase {
+		if strings.ToLower(item.Compatibility) == compatLowerCase {
 			l.AddNode(item.InstanceType, item.BlendedScore)
 		}
 	}
