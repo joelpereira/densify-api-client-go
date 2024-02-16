@@ -117,14 +117,14 @@ func main() {
 	}
 
 	// INSTANCE GOVERNANCE
-	err = client.LoadDensifyInstanceGovernanceAllInstances(recommendation, 1.2)
+	err = client.LoadDensifyGuardrailsAllInstances(recommendation, 1.2)
 	if err != nil {
 		fmt.Printf("GET INSTANCE GOVERNANCE: ERROR: '%v'\n\n", err.Error())
 		return
 	}
-	fmt.Printf("GET INSTANCE GOVERNANCE: '%v'\n\n", recommendation.InstanceGovernance)
+	fmt.Printf("GET INSTANCE GOVERNANCE (GUARDRAILS): '%v'\n\n", recommendation.Guardrails)
 
-	l, err := recommendation.GetInstanceGovernanceSpendTolerance()
+	l, err := recommendation.GetGuardrailsOutsideSpendTolerance()
 	if err != nil {
 		fmt.Printf("InstanceGovernance ERROR: '%v'\n\n", err.Error())
 		return

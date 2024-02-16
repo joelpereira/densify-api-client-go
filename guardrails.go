@@ -88,7 +88,7 @@ func (r *DensifyRecommendation) GetGuardrailsIncompatible() (*DensifyGuardrailsL
 func (r *DensifyRecommendation) GetGuardrailsInsufficientResources() (*DensifyGuardrailsList, error) {
 	return r.GetGuardrailsCompatLevel("Insufficient Resources")
 }
-func (r *DensifyRecommendation) GetGuardrailsSpendTolerance() (*DensifyGuardrailsList, error) {
+func (r *DensifyRecommendation) GetGuardrailsOutsideSpendTolerance() (*DensifyGuardrailsList, error) {
 	return r.GetGuardrailsCompatLevel("Outside Spend Tolerance")
 }
 
