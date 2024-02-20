@@ -79,6 +79,23 @@ func (l *DensifyGuardrailsList) GetScoreItems(score int) map[string]DensifyGuard
 	return l.InstanceList[score]
 }
 
+func (l *DensifyGuardrailsList) ToListOfInstanceTypes() []string {
+	// convert to a list/array of all the instance types.
+	var rv []string
+	keys := l.GetSortedScoreList() // return first one in the sorted list.
+
+	for key := range keys {
+		subItems := l.GetScoreItems(key)
+		if len(subItems) > 0 {
+			for instance, _ := range subItems {
+				// rv = fmt.Sprintf(`%s"%s"`, rv, instance)
+				rv = append(rv, instance)
+			}
+		}
+	}
+	return rv
+}
+
 func (r *DensifyRecommendation) GetGuardrailsOK() (*DensifyGuardrailsList, error) {
 	return r.GetGuardrailsCompatLevel("OK")
 }
